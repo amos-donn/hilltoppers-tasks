@@ -262,5 +262,55 @@
       }
     ],
     "fetchedAt": "2026-09-25T15:22:38.176Z"
+  },
+  "2026-09-28": {
+    "heading": "Daily Bulletin | Monday",
+    "blocks": [
+      {
+        "kind": "heading",
+        "text": "Green Day"
+      },
+      {
+        "kind": "para",
+        "text": "Our XC teams are hosting their one and only home meet on Tuesday. We were unable to host a meet last year, so we want our community to be conscious of runners on campus Tuesday afternoon beginning at 3:30 until approximately 5:00. At 3:15 tomorrow, the exits to South Main St and Barker Ave will be closed and remain so until the races are finished. During this time, you must exit via Brantview Dr. Please be aware that the course does cross Brantview Dr. to Stowe Green. Mr. Garcia will be there to manage traffic that is coming and going. Thank you for helping us deliver a safe and great race! Go Toppers!"
+      },
+      {
+        "kind": "para",
+        "text": "On Thursday, October 1st the REAL Club will meet at Tinker House at 3pm to walk together down to St. Johnsbury School for a special presentation for teens on making smart choices. The presentation will be from 3:30-4:30 and will address vaping, anxiety & depression, social media, and bullying. Snacks and door prizes are available. For questions, reach out to Mrs. Sweet."
+      },
+      {
+        "kind": "para",
+        "text": "Scholars’ Bowl traveled to Essex on Saturday for the Sue Pasco Opening Tournament where the SJA A Team dominated and went undefeated. In their closest competition of the day, they won by 165 points. They won that match against the SJA B Team. Congratulations to all the Scholars: Amos Donn, Gaia Kennedy, Charlie Peralez, Jonah Raser, Raine Rashid, Alexey Strokanov, Poppy Shattuck, and Sophie White. Thanks to Chef Hale for guiding the team."
+      },
+      {
+        "kind": "para",
+        "text": "Boys Golf took 10th in the NVAC Tournament on Friday."
+      },
+      {
+        "kind": "para",
+        "text": "Boys Cross Country competed at the U-32 Invitational over the weekend. The JV team finished 2nd, just one point behind BFA St. Albans, led by Stone Thomas in 2nd overall. The Varsity team won the meet by eight points over U32, led by John Thornton Sherman in 3rd, Bryan Stocker in 4th, and Manny Fliegelman in 5th."
+      },
+      {
+        "kind": "para",
+        "text": "For Girls Cross Country, Willa Mantius set the tone for the Academy by securing a top 15 overall finish. The defining highlight of the team’s performance came from its middle pack, where Bailey Qualter and Elsie Kidder ran stride-for-stride through the chute, to seal two crucial scoring positions. The JV team’s charge was ignited by Bella Annello and Wenonah Brewer-Nyborg, who ran virtually shoulder-to-shoulder through the tape. Bella earned 16th place overall, while Wenonah chased her in just three seconds later for 17th overall. Sophomore Lyda Bentley delivered another season-best clocking to keep the Hilltoppers within striking distance, placing 23rd overall."
+      },
+      {
+        "kind": "para",
+        "text": "JV Boys Soccer beat Mt. Mansfield, 4-2. Goals by Sam Jewel, Luke Raser and 2 by Kieren Schroer."
+      },
+      {
+        "kind": "para",
+        "text": "SJA Varsity Field Hockey had a tough road loss to Montpelier in overtime on Saturday. It was a midfield battle, and everyone worked hard. The team looks to bounce back against Middlebury on Tuesday."
+      },
+      {
+        "kind": "para",
+        "text": "JV/VARSITY VOLLEYBALL — HOME vs. CVU 4:30/6:00"
+      },
+      {
+        "kind": "para",
+        "text": "JV FOOTBALL — HOME vs. COLCHESTER 6:00"
+      }
+    ],
+    "fetchedAt": "2026-09-28T14:16:22.417Z"
   }
 }
