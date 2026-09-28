@@ -293,7 +293,7 @@ body, html {
 .class-settings__form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 0;
 }
 
 .class-settings__panel {
@@ -309,31 +309,65 @@ body, html {
   font-size: 20px;
 }
 
+.class-settings__subsection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
 .class-settings__field {
-  display: flex;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 320px);
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   font-weight: 600;
 }
 
+.class-settings__field + .class-settings__field {
+  margin-top: 12px;
+}
+
 .class-settings__field label {
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.5;
 }
 
 .class-settings__field select {
-  padding: 8px 12px;
-  border-radius: 8px;
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 38px 8px 12px;
+  border-radius: 9px;
   border: 1px solid var(--border);
-  background: var(--surface-muted);
+  background-color: var(--surface-muted);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23718174' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
   color: var(--text);
-  font-size: 15px;
-  font-family: inherit;
-  min-width: 120px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.class-settings__field select {
-  min-width: 120px;
+.class-settings__field select:hover {
+  border-color: #aabbaa;
+}
+
+.class-settings__field select:focus-visible {
+  outline: 2px solid #577b65;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .class-settings__field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
 }
 
 .class-settings__table {
@@ -431,7 +465,7 @@ body, html {
   border-bottom: none;
 }
 
-.class-settings__table-row:nth-child(even) {
+.class-settings__table-row:nth-child(odd) {
   background: var(--surface-muted);
 }
 

@@ -455,9 +455,9 @@ const ClassSettings: React.FC<{ onAccount?: () => void }> = ({ onAccount }) => {
       {loading ? (
         <div className="class-settings__loading">Loading…</div>
       ) : (
-        <div className="class-settings__form">
-          <section className="class-settings__panel">
-            <h2>Display Settings</h2>
+        <div className="class-settings__form class-settings__panel">
+          <section>
+            <h2>Preferences</h2>
             <div className="class-settings__field">
               <label htmlFor="time-format">Time format</label>
               <select
@@ -497,8 +497,8 @@ const ClassSettings: React.FC<{ onAccount?: () => void }> = ({ onAccount }) => {
             </div>
           </section>
 
-          <section className="class-settings__panel">
-            <h2>Class Blocks</h2>
+          <section className="class-settings__subsection">
+            <h2>Classes</h2>
             <div className="class-settings__table" role="table" aria-label="Class block preferences">
               <div className="class-settings__table-row class-settings__table-row--header" role="row">
                 <div role="columnheader">Block</div>
