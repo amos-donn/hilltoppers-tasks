@@ -152,6 +152,15 @@ Mention the version number it bumps to. If you left something out or made a
 judgment call, say so in a sentence — the person asking will not spot it in
 the code.
 
+## Topping width
+
+The popup's 320px minimum is its content width; with 16px padding on each side,
+its minimum outer width is 352px. At that size, the Topping iframe has about
+318 CSS pixels available after the card borders. Build for the iframe's actual
+viewport, not a hard-coded 320px width. Let text wrap and keep images and inputs
+within their container. See [responsive layout guidance](worker/README.md#topping-width)
+and verify with Preview a Topping. Keep the extension's existing popup sizing.
+
 ## Topping content height
 
 Toppings support `heightMode: "fixed"` (the default, suitable for chat) and

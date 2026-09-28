@@ -171,6 +171,29 @@ replies. Replies are single-level. Signed-in users can vote via POST
 `/:id/replies/:replyId/vote` with value 1, -1, or 0 (cancel). Votes live in
 `suggestion_reply_votes`, one per account per reply, and cascade on deletion.
 
+### Topping width
+
+The popup currently has a **320 CSS-pixel minimum content width**, plus 16px
+padding on each side: its minimum outer width is **352px**, not 320px.
+At that size, the Topping card is 320px wide including its two 1px borders,
+leaving approximately **318px for the iframe viewport**. These describe the
+current layout, not a fixed width that Toppings should depend on.
+
+Make your webpage responsive to its iframe viewport. Avoid hard-coded 320px
+widths or minimum widths, allow text to wrap, and keep images and form controls
+within their container. For example, in your own Topping's stylesheet:
+
+```css
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; }
+[data-topping-content] { width: 100%; min-width: 0; overflow-wrap: anywhere; }
+img, video, input, textarea, select { max-width: 100%; }
+```
+
+Apply these styles inside the Topping, not to the extension's popup. Test at a
+318px viewport and at wider sizes, then use **Preview a Topping** to check the
+actual embedded layout. Height mode does not change the available width.
+
 ### Topping height modes
 
 Apply `topping-height-migration.sql` once to an existing Toppings D1 database
