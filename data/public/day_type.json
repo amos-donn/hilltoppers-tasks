@@ -1,18 +1,17 @@
 {
-  "updatedAt": "2026-09-25T15:07:18.294Z",
+  "updatedAt": "2026-09-28T18:03:57.230Z",
   "source": "https://stjacademy.org/a-culture-of-caring-and-respect/sja-news/daily-bulletin/",
   "bulletin": {
-    "date": "2026-09-25",
-    "weekday": "Friday",
-    "dayType": "White Day",
+    "date": "2026-09-28",
+    "weekday": "Monday",
+    "dayType": "Green Day",
     "headings": [
-      "White Day",
-      "Walk for a Healthy Community Schedule (ABDEC)"
+      "Green Day"
     ]
   },
   "anchor": {
-    "date": "2026-09-25",
-    "dayType": "White Day"
+    "date": "2026-09-28",
+    "dayType": "Green Day"
   },
   "days": {
     "2026-08-26": "Green Day",
@@ -225,6 +224,9 @@
     "2027-03-21": "No School",
     "2027-03-22": "White Day",
     "2027-03-23": "Green Day",
-    "2027-03-24": "White Day"
+    "2027-03-24": "White Day",
+    "2027-03-25": "Green Day",
+    "2027-03-26": "No School",
+    "2027-03-27": "No School"
   }
 }
