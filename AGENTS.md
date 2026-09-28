@@ -81,6 +81,10 @@ npm run build     # must succeed; writes dist/
   against `main` before assuming you caused one, and do not fix them in a PR
   about something else.
 - `dist/` is git-ignored. Never commit it.
+- On main, **Release extension** publishes an unreleased manifest version as a
+  GitHub Release with a built ZIP and generated notes. All four version fields
+  must match. Existing releases are skipped; failed runs can be retried from
+  Actions. Chrome Web Store submission remains manual.
 - There are no automated tests. Verification is: it builds, and it looks right.
 
 ### Looking at it without Chrome
