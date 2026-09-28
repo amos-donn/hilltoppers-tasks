@@ -210,3 +210,17 @@ test('edits publish immediately and preserve installs and identity',async()=>{
  await request('/'+id,'DELETE');
  expect((await request('/'+id+'/edit','POST',{...listing,name:'Restore hidden'})).status).toBe(404);
 });
+test('height modes default to fixed, persist through publishing and edits, and reject invalid values',async()=>{
+ auth.user={...student,uid:'height-author'};
+ const {id}=await (await request('','POST',{...listing,heightMode:'content'})).json() as any;
+ expect((await (await request()).json() as any).toppings.find((t:any)=>t.id===id).heightMode).toBe('content');
+ expect((await (await request('/submissions?own=1')).json() as any).toppings.find((t:any)=>t.id===id).heightMode).toBe('content');
+ expect((await request('/'+id+'/edit','POST',{...listing,name:'Old client edit'})).status).toBe(200);
+ expect((await (await request()).json() as any).toppings.find((t:any)=>t.id===id).heightMode).toBe('content');
+ expect((await request('/'+id+'/edit','POST',{...listing,heightMode:'fixed'})).status).toBe(200);
+ expect((await (await request()).json() as any).toppings.find((t:any)=>t.id===id).heightMode).toBe('fixed');
+ const {id:legacy}=await (await request('','POST',listing)).json() as any;
+ expect((await (await request()).json() as any).toppings.find((t:any)=>t.id===legacy).heightMode).toBe('fixed');
+ expect((await request('','POST',{...listing,heightMode:'huge'})).status).toBe(400);
+ expect((await request('/'+id+'/edit','POST',{...listing,heightMode:'huge'})).status).toBe(400);
+});

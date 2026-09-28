@@ -326,3 +326,4 @@
 
 .preview-crop-heading strong { display:flex; align-items:center; gap:7px; color:#243c32; font-size:14px; }
 .modal .preview-crop-hint { margin:0 0 12px; font-size:12px; line-height:1.5; color:#607367; }
+.modal-field select { width:100%; padding:11px 12px; border:1px solid #d5dfce; border-radius:8px; background:#fff; color:#243c32; font:inherit; font-size:14px; color-scheme:light; }

@@ -170,3 +170,39 @@ reply author or verified administrator. Deleting a suggestion cascades to its
 replies. Replies are single-level. Signed-in users can vote via POST
 `/:id/replies/:replyId/vote` with value 1, -1, or 0 (cancel). Votes live in
 `suggestion_reply_votes`, one per account per reply, and cascade on deletion.
+
+### Topping height modes
+
+Apply `topping-height-migration.sql` once to an existing Toppings D1 database
+before deploying this API version. Fresh databases already include the column.
+The catalog, publish and edit APIs expose `heightMode`: `fixed` (default) or
+`content`. Old clients retain the existing mode on edits that omit the field.
+
+For content height, copy `toppings/shared/resize.js` into your hosted website.
+Wrap all page content, including footers, in a natural-height container:
+
+```html
+<style>
+  html, body { margin: 0; min-height: 0; }
+  [data-topping-content] { display: flow-root; }
+</style>
+<main data-topping-content>
+  <!-- Your whole Topping goes here. -->
+</main>
+<script src="./resize.js" defer></script>
+```
+
+Choose **Fit content** in Preview a Topping and in the publishing/editing form.
+Do not give the wrapper `height: 100vh`, `min-height: 100%`, or a fixed scrolling
+height. The helper measures the wrapper so expanding and shrinking both work.
+It reports height after the extension sends its context message, including in
+localhost previews. It supports images and other asynchronous layout updates
+through ResizeObserver. Chat interfaces can keep **Fixed height**.
+
+Custom integrations may send `{channel: 'hilltoppers-topping-v1', session,
+type: 'resize', height}` to the `host` origin from the iframe URL. Validate the
+context message's origin, source and session before replying. The extension
+validates those same fields on resize messages and only accepts finite positive
+numeric heights in content mode, clamped to 120–10,000 CSS pixels. Taller content
+can still scroll inside the frame. Until a valid report arrives, the existing
+fixed-height layout stays usable; missing replies never hide the Topping.

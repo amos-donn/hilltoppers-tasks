@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { toppingRequest } from '../services/toppingsService';
 import ToppingIcon from './ToppingIcon';
 
-export type Submission = { id:string; name:string; description:string; image:string; imageData?:string; revisionStatus?:string; url:string; icon:string; status:string; hidden:number };
+export type Submission = { id:string; name:string; description:string; image:string; imageData?:string; revisionStatus?:string; url:string; icon:string; status:string; hidden:number; heightMode?:'fixed'|'content' };
 export default function OwnToppingSubmissions({revision,onEdit}:{revision:string;onEdit:(t:Submission)=>void}) {
   const [items,setItems]=useState<Submission[]>([]);
   const [error,setError]=useState('');

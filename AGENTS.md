@@ -147,3 +147,14 @@ Write it for the student, not for a reviewer. Three parts:
 Mention the version number it bumps to. If you left something out or made a
 judgment call, say so in a sentence — the person asking will not spot it in
 the code.
+
+## Topping content height
+
+Toppings support `heightMode: "fixed"` (the default, suitable for chat) and
+`heightMode: "content"` (natural-height content with scrolling in the extension).
+Authors choose this in publishing, editing, or preview. For content mode, copy
+[`toppings/shared/resize.js`](toppings/shared/resize.js) into the independently
+hosted Topping and wrap its content in `[data-topping-content]`. See the working
+HTML example and protocol in [worker/README.md](worker/README.md#topping-height-modes).
+Avoid viewport-based heights on that wrapper so shrinking works as well as
+expanding. No reply is required for a fixed-height Topping to remain usable.

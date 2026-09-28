@@ -9,6 +9,7 @@ const CHANNEL = 'hilltoppers-topping-v1';
 
 function ToppingFrame({ topping }: { topping: Topping }) {
   const frame = useRef<HTMLIFrameElement>(null);
+  const [contentHeight,setContentHeight]=useState<number|null>(null);
   const [session] = useState(() => crypto.randomUUID());
   const source = new URL(topping.url);
   source.searchParams.set('session', session);
@@ -16,18 +17,28 @@ function ToppingFrame({ topping }: { topping: Topping }) {
   const origin = source.origin;
 
   useEffect(() => {
-    if (topping.preview) return;
+    setContentHeight(null);
+    let updateFrame=0;
+    let nextHeight=0;
+    const receive=(event:MessageEvent)=>{
+      if(topping.heightMode!=='content'||event.origin!==origin||event.source!==frame.current?.contentWindow)return;
+      const data=event.data;
+      if(data?.channel!==CHANNEL||data.session!==session||data.type!=='resize'||typeof data.height!=='number'||!Number.isFinite(data.height)||data.height<=0)return;
+      nextHeight=Math.max(120,Math.min(10000,Math.ceil(data.height)));
+      if(!updateFrame)updateFrame=requestAnimationFrame(()=>{setContentHeight(nextHeight);updateFrame=0;});
+    };
+    window.addEventListener('message',receive);
     // Context messages are optional integration support, not a health check.
     // A normal embedded webpage does not need to reply to remain usable.
     const connect = () => {
-      frame.current?.contentWindow?.postMessage({ channel: CHANNEL, session, type: 'context' }, origin);
+      frame.current?.contentWindow?.postMessage({ channel: CHANNEL, session, type: 'context', heightMode:topping.heightMode||'fixed' }, origin);
     };
     const timer = window.setInterval(connect, 1500);
     connect();
-    return () => window.clearInterval(timer);
-  }, [session, origin, topping.preview]);
+    return () => {window.clearInterval(timer);cancelAnimationFrame(updateFrame);window.removeEventListener('message',receive);};
+  }, [session, origin, topping.url, topping.heightMode]);
 
-  return <div id={`topping-${topping.id}`} className="topping-content">
+  return <div id={`topping-${topping.id}`} className="topping-content" style={topping.heightMode==='content'&&contentHeight!==null?{height:contentHeight+2}:undefined}>
     <iframe ref={frame} src={source.href} title={`${topping.name} topping`}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
       referrerPolicy="no-referrer" />

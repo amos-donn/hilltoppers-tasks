@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS toppings (
  id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL,
  url TEXT NOT NULL, image TEXT NOT NULL, author_uid TEXT NOT NULL,
  author TEXT NOT NULL, graduation_year INTEGER, created_at INTEGER NOT NULL,
+ height_mode TEXT NOT NULL DEFAULT 'fixed' CHECK(height_mode IN ('fixed','content')),
  hidden INTEGER NOT NULL DEFAULT 0, icon TEXT NOT NULL DEFAULT 'sparkle', status TEXT NOT NULL DEFAULT 'pending'
 );
 CREATE TABLE IF NOT EXISTS topping_users (
