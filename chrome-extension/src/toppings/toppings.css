@@ -24,7 +24,6 @@
   flex: none;
   border: 1px solid #d1ddce;
   border-radius: 15px;
-  transform: rotate(-3deg);
 }
 
 .intro-illustration svg {
@@ -45,7 +44,6 @@
 .intro-illustration-community {
   color: #5d786f;
   background: #e0ebe7;
-  transform: rotate(3deg);
 }
 
 .community-intro h1,

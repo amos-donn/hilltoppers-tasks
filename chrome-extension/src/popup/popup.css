@@ -1343,8 +1343,6 @@ header {
 .topping-menu-items { position: absolute; right: 0; top: 30px; min-width: 144px; padding: 4px; border: 1px solid #dce2de; border-radius: 8px; background: #fff; box-shadow: 0 5px 16px #17251d14; }
 .topping-menu-items a, .topping-menu-items button { display: block; width: 100%; text-align: left; border: 0; background: transparent; text-decoration: none; color: #56655a; font: inherit; font-size: 11px; padding: 8px; border-radius: 4px; cursor: pointer; }
 .topping-menu-items a:hover, .topping-menu-items button:hover { background: #f1f5f2; }
-.topping-unavailable { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; color: #68746c; font-size: 12px; }
-.topping-unavailable button { border: 1px solid #dce2de; border-radius: 6px; background: #fff; padding: 6px 10px; color: inherit; cursor: pointer; }
 .topping-menu :focus-visible { outline: 2px solid #1a7f37; outline-offset: 3px; }
 
 .toppings-dock { margin-top:12px; }

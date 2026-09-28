@@ -156,13 +156,13 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
     const imageURL=upload ? `${new URL(request.url).origin}/api/toppings/${id}/image` : body.image;
     const insert=env.TOPPINGS_DB.prepare(`INSERT INTO toppings
       (id,name,description,url,image,author_uid,author,graduation_year,created_at,icon,status)
-      SELECT ?,?,?,?,?,?,?,?,?,?,'pending' WHERE (SELECT COUNT(*) FROM toppings WHERE author_uid=? AND hidden=0)<20`)
+      SELECT ?,?,?,?,?,?,?,?,?,?,'approved' WHERE (SELECT COUNT(*) FROM toppings WHERE author_uid=? AND hidden=0)<20`)
       .bind(id, body.name.trim(), description.trim(), body.url, imageURL, user.uid, author, null, Date.now(), icon, user.uid);
     const operations=[insert];
     if(upload) operations.push(env.TOPPINGS_DB.prepare('INSERT INTO topping_images(topping_id,mime,data) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM toppings WHERE id=?)').bind(id,upload.mime,upload.data,id));
     const [result]=await env.TOPPINGS_DB.batch(operations);
     if (!result.meta.changes) return respond({ error: 'You can have up to 20 Toppings.' }, 429);
-    return respond({ id, status:'pending' }, 201);
+    return respond({ id, status:'approved' }, 201);
   }
 
   const editPath=/^\/api\/toppings\/([a-zA-Z0-9-]{1,64})\/edit$/.exec(path);
@@ -173,9 +173,12 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
     const body=await readBody(request,720000);
     const upload=uploadedImage(body?.imageData);
     if(!body || typeof body.name!=='string' || body.name.trim().length<2 || body.name.length>48 || typeof body.description!=='string' || body.description.length>180 || !publicHTTPS(body.url) || !iconIds.includes(body.icon) || (body.imageData!=null&&!upload))return respond({error:'Check the name, URL, icon and preview image.'},400);
-    const payload=JSON.stringify({name:body.name.trim(),description:body.description.trim(),url:body.url,icon:body.icon,image:upload?body.imageData:current.image,...(upload?{imageData:body.imageData}:{})});
-    await env.TOPPINGS_DB.prepare("INSERT INTO topping_revisions(topping_id,payload,status) VALUES (?,?,'pending') ON CONFLICT(topping_id) DO UPDATE SET payload=excluded.payload,status='pending'").bind(editPath[1],payload).run();
-    return respond({ok:true,status:'pending'});
+    const image=upload?`${new URL(request.url).origin}/api/toppings/${editPath[1]}/image?v=${Date.now()}`:current.image;
+    const operations=[env.TOPPINGS_DB.prepare("UPDATE toppings SET name=?,description=?,url=?,icon=?,image=?,status='approved' WHERE id=? AND hidden=0").bind(body.name.trim(),body.description.trim(),body.url,body.icon,image,editPath[1])];
+    if(upload)operations.push(env.TOPPINGS_DB.prepare('INSERT INTO topping_images(topping_id,mime,data) VALUES (?,?,?) ON CONFLICT(topping_id) DO UPDATE SET mime=excluded.mime,data=excluded.data').bind(editPath[1],upload.mime,upload.data));
+    operations.push(env.TOPPINGS_DB.prepare('DELETE FROM topping_revisions WHERE topping_id=?').bind(editPath[1]));
+    await env.TOPPINGS_DB.batch(operations);
+    return respond({ok:true,status:'approved'});
   }
 
   const match = /^\/api\/toppings\/([a-zA-Z0-9-]{1,64})(?:\/(install|rating|report))?$/.exec(path);

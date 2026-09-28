@@ -20,7 +20,7 @@ Published Toppings require an explicit `icon` ID: `sparkle`, `chat`, `book`,
 or `people`. The extension uses it in the collapsed Topping header.
 
 GET `/api/toppings` lists public cards sorted by unique browser registrations,
-with optional caller installation/rating fields. POST creates a pending submission for verified school accounts or linked school
+with optional caller installation/rating fields. POST immediately publishes a listing for verified school accounts or linked school
 emails. The server derives the author name from the verified school email,
 ignoring editable profile names. Email is never public. Ratings remain one per account, regardless of browser.
 Users is an estimated browser count, not an exact count of individual people.
@@ -115,7 +115,7 @@ email and Topping Bar Workers with these routes/bindings.
 Before deploying the review workflow to an existing database, apply
 `topping-review-migration.sql` once with `wrangler d1 execute` and
 `--config wrangler.toppings.toml --remote`. Existing listings remain approved;
-new submissions default to pending. Fresh databases use `toppings-schema.sql`.
+New submissions are immediately published by the API. Fresh databases use `toppings-schema.sql`.
 `TOPPING_REVIEWER_EMAIL` identifies the reviewer and requires a verified Firebase
 email claim. GET `/api/toppings/submissions` returns the caller's submissions,
 plus pending submissions for the reviewer. POST `/:id/review` accepts
@@ -128,7 +128,7 @@ and signature, and stores the image with its submission atomically in D1.
 `/:id/image` serves the image with a fixed image content type and `nosniff`.
 Preview image URLs are public, including during review; they contain random
 submission IDs. Legacy preview URLs are still accepted, but legacy clients also
-submit to the review queue and cannot override the author or approval status.
+publish immediately and cannot override the verified author. Author edits also go live immediately, with preview-image changes applied atomically. The review endpoints remain available only for historical pending submissions; new submissions and edits do not enter that queue.
 
 The extension defaults to the owner-published Ask SJA listing
 `2e318d5f-57cf-4799-8443-f5c41cf0a1e3`. Each browser migrates once, replacing

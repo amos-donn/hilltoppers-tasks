@@ -129,10 +129,13 @@ async function publishedFixture(body:Record<string,unknown>=listing) {
  return response;
 }
 const reviewer={...student,uid:'reviewer',email:'reviewer@example.org'};
-test('legacy clients cannot spoof authors or bypass review; only verified reviewer approves',async()=>{
+test('publishing is immediate with verified authors; legacy pending items still require the administrator',async()=>{
  auth.user={...student,email:'amos.donn@student.stjacademy.org',fullName:'Fake Author'};
  const r=await request('','POST',{...listing,author:'Fake Author',status:'approved'});
- expect(r.status).toBe(201);const {id,status}=await r.json() as any;expect(status).toBe('pending');
+ expect(r.status).toBe(201);const {id,status}=await r.json() as any;expect(status).toBe('approved');
+ expect((await (await request()).json() as any).toppings.find((t:any)=>t.id===id)).toMatchObject({author:'Amos Donn'});
+ expect((await guest('/'+id+'/install','POST')).status).toBe(200);
+ await env.TOPPINGS_DB.prepare("UPDATE toppings SET status='pending' WHERE id=?").bind(id).run();
  let mine=await (await request('/submissions')).json() as any;
  expect(mine.toppings.find((t:any)=>t.id===id)).toMatchObject({author:'Amos Donn',status:'pending'});
  auth.user=null;
@@ -159,6 +162,7 @@ test('uploaded previews persist with correct content type; rejected submissions 
  const {id}=await r.json() as any;
  const image=await request('/'+id+'/image');expect(image.status).toBe(200);expect(image.headers.get('Content-Type')).toBe('image/png');expect((await image.arrayBuffer()).byteLength).toBeGreaterThan(8);
  const mine=await (await request('/submissions')).json() as any;expect(mine.toppings.find((t:any)=>t.id===id).image).toBe('https://example.org/api/toppings/'+id+'/image');
+ await env.TOPPINGS_DB.prepare("UPDATE toppings SET status='pending' WHERE id=?").bind(id).run();
  auth.user=reviewer;expect((await request('/'+id+'/review','POST',{status:'rejected'})).status).toBe(200);
  expect((await (await request()).json() as any).toppings.some((t:any)=>t.id===id)).toBe(false);
  auth.user=student;expect((await request('/'+id,'DELETE')).status).toBe(200);expect((await request('/'+id+'/image')).status).toBe(404);
@@ -190,20 +194,19 @@ test('only a verified reviewer can unpublish another author listing',async()=>{
  expect((await request('/'+id+'/install','POST')).status).toBe(404);
 });
 
-test('edits stay private until approved and preserve installs and identity',async()=>{
+test('edits publish immediately and preserve installs and identity',async()=>{
  auth.user={...student,uid:'editing-author'};
  const {id}=await (await publishedFixture()).json() as any;
  await request('/'+id+'/install','POST');
  auth.user={...student,uid:'outsider'};expect((await request('/'+id+'/edit','POST',{...listing,name:'Revised Timer'})).status).toBe(403);
  auth.user={...student,uid:'editing-author'};
  expect((await request('/'+id+'/edit','POST',{...listing,name:'Revised Timer',icon:'book',author:'Fake',imageData:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1EAAAAASUVORK5CYII='})).status).toBe(200);
- let live=(await (await request()).json() as any).toppings.find((t:any)=>t.id===id);expect(live.name).toBe(listing.name);expect(live.icon).toBe('chat');
- const own=(await (await request('/submissions?own=1')).json() as any).toppings.find((t:any)=>t.id===id);expect(own).toMatchObject({name:'Revised Timer',revisionStatus:'pending'});
- auth.user={...student,uid:'reviewer',email:'reviewer@example.org'};
- expect((await (await request('/submissions')).json() as any).toppings.find((t:any)=>t.id===id)).toMatchObject({name:'Revised Timer',status:'pending'});
- expect((await request('/'+id+'/review','POST',{status:'approved'})).status).toBe(200);
- live=(await (await request()).json() as any).toppings.find((t:any)=>t.id===id);expect(live).toMatchObject({name:'Revised Timer',icon:'book',users:1});expect(live.author).not.toBe('Fake');expect((await request('/'+id+'/image')).headers.get('Content-Type')).toBe('image/png');
- auth.user={...student,uid:'editing-author'};await request('/'+id+'/edit','POST',{...listing,name:'Rejected edit'});
- auth.user={...student,uid:'reviewer',email:'reviewer@example.org'};await request('/'+id+'/review','POST',{status:'rejected'});
- expect((await (await request()).json() as any).toppings.find((t:any)=>t.id===id).name).toBe('Revised Timer');
+ const live=(await (await request()).json() as any).toppings.find((t:any)=>t.id===id);
+ expect(live).toMatchObject({name:'Revised Timer',icon:'book',users:1});expect(live.author).not.toBe('Fake');
+ expect((await request('/'+id+'/image')).headers.get('Content-Type')).toBe('image/png');
+ const own=(await (await request('/submissions?own=1')).json() as any).toppings.find((t:any)=>t.id===id);
+ expect(own).toMatchObject({name:'Revised Timer',status:'approved'});expect(own.revisionStatus).toBeUndefined();
+ expect(await env.TOPPINGS_DB.prepare('SELECT * FROM topping_revisions WHERE topping_id=?').bind(id).first()).toBeNull();
+ await request('/'+id,'DELETE');
+ expect((await request('/'+id+'/edit','POST',{...listing,name:'Restore hidden'})).status).toBe(404);
 });

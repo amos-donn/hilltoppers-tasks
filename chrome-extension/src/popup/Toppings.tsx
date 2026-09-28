@@ -9,8 +9,7 @@ const CHANNEL = 'hilltoppers-topping-v1';
 
 function ToppingFrame({ topping }: { topping: Topping }) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const [session, setSession] = useState(() => crypto.randomUUID());
-  const [unavailable, setUnavailable] = useState(false);
+  const [session] = useState(() => crypto.randomUUID());
   const source = new URL(topping.url);
   source.searchParams.set('session', session);
   source.searchParams.set('host', window.location.origin);
@@ -18,33 +17,20 @@ function ToppingFrame({ topping }: { topping: Topping }) {
 
   useEffect(() => {
     if (topping.preview) return;
-    let lastReply = Date.now();
-    const receive = (event: MessageEvent) => {
-      if (event.origin !== origin || event.source !== frame.current?.contentWindow) return;
-      const data = event.data;
-      if (data?.channel === CHANNEL && data.session === session && data.type === 'ready') {
-        lastReply = Date.now();
-        setUnavailable(false);
-      }
-    };
+    // Context messages are optional integration support, not a health check.
+    // A normal embedded webpage does not need to reply to remain usable.
     const connect = () => {
       frame.current?.contentWindow?.postMessage({ channel: CHANNEL, session, type: 'context' }, origin);
-      if (Date.now() - lastReply > 12000) setUnavailable(true);
     };
-    window.addEventListener('message', receive);
     const timer = window.setInterval(connect, 1500);
     connect();
-    return () => { window.removeEventListener('message', receive); window.clearInterval(timer); };
+    return () => window.clearInterval(timer);
   }, [session, origin, topping.preview]);
 
   return <div id={`topping-${topping.id}`} className="topping-content">
     <iframe ref={frame} src={source.href} title={`${topping.name} topping`}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
       referrerPolicy="no-referrer" />
-    {!topping.preview && unavailable && <div className="topping-unavailable" role="alert">
-      <p>{topping.name} could not be reached.</p>
-      <button type="button" onClick={() => { setSession(crypto.randomUUID()); setUnavailable(false); }}>Try again</button>
-    </div>}
   </div>;
 }
 
