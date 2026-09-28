@@ -747,27 +747,22 @@ const Popup: React.FC = () => {
   const dayTypeLabel = schedule.dayType;
 
   const autoDiningPeriod = useMemo<DiningMenuPayload['period']>(() => {
-    if (!filteredBlocks.length) {
-      return 'Lunch';
-    }
     const firstBlock = filteredBlocks[0];
-    const firstStart = parseBlockTime(firstBlock.start, baseDate);
+    const firstStart = firstBlock ? parseBlockTime(firstBlock.start, baseDate) : null;
 
-    if (now < firstStart) {
+    if (firstStart && now < firstStart) {
       return 'Breakfast';
     }
 
     const namedLunchBlock =
       filteredBlocks.find((block) => block.name.toLowerCase().includes('lunch')) ?? lunchBlock;
 
-    if (namedLunchBlock) {
-      const lunchEnd = parseBlockTime(namedLunchBlock.end, baseDate);
-      if (now >= lunchEnd) {
-        return 'Dinner';
-      }
-    }
+    // Weekends and schedules without lunch still switch to dinner at 2 PM school time.
+    const lunchEnd = namedLunchBlock
+      ? parseBlockTime(namedLunchBlock.end, baseDate)
+      : parseBlockTime('14:00', now);
 
-    return 'Lunch';
+    return now >= lunchEnd ? 'Dinner' : 'Lunch';
   }, [baseDate, lunchBlock, now, filteredBlocks]);
 
   useEffect(() => {
