@@ -133,3 +133,16 @@
 @media (prefers-reduced-motion: reduce) {
   .public-suggestion--new { animation:none; background:var(--accent-muted); }
 }
+.suggestion-reply-toggle { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:999px; padding:8px 12px; background:#eaf0e7; color:var(--text); font-size:12px; cursor:pointer; }
+.suggestion-reply-toggle svg { width:18px; height:18px; }
+.suggestion-reply-toggle:hover { background:#dfe8dc; }
+.suggestion-reply-toggle:focus-visible { outline:3px solid #78a88c; outline-offset:2px; }
+.suggestion-replies { margin:20px 0 0 12px; padding-left:18px; border-left:2px solid var(--border); }
+.suggestion-reply { padding:12px 0; }
+.suggestion-reply > p { margin:8px 0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:16px; line-height:1.65; }
+.reply-form { margin-top:16px; }
+.reply-form > div { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; }
+.reply-form > div > span { color:var(--muted); font-size:12px; }
+.suggestion-footer { flex-wrap:wrap; }
+
+.feedback .reply-form textarea { min-height:76px; }

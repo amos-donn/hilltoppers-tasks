@@ -159,3 +159,14 @@ Authors can DELETE `/api/suggestions/:id`; the verified account configured in
 `TOPPING_REVIEWER_EMAIL` can also delete any public suggestion. Votes and the
 suggestion are deleted together. GET includes a caller-specific `canDelete`
 flag without exposing the author account ID.
+
+Public suggestion replies use `suggestion_replies` in the same D1 database.
+Reapply `suggestions-schema.sql` before deploying this API update; all statements
+are idempotent. GET `/api/suggestions/:id/replies` is public and paginates oldest
+first (50 at a time). POST requires a verified school identity and a request ID
+for retry deduplication. Names are derived by the server; replies are plain text
+with a 2,000-character limit. DELETE `/:id/replies/:replyId` is restricted to the
+reply author or verified administrator. Deleting a suggestion cascades to its
+replies. Replies are single-level. Signed-in users can vote via POST
+`/:id/replies/:replyId/vote` with value 1, -1, or 0 (cancel). Votes live in
+`suggestion_reply_votes`, one per account per reply, and cascade on deletion.

@@ -9,3 +9,15 @@ CREATE TABLE IF NOT EXISTS suggestion_votes (
  suggestion_id TEXT NOT NULL REFERENCES public_suggestions(id), uid TEXT NOT NULL,
  value INTEGER NOT NULL CHECK(value IN(-1,1)), PRIMARY KEY(suggestion_id,uid)
 );
+CREATE TABLE IF NOT EXISTS suggestion_replies (
+ id TEXT PRIMARY KEY, suggestion_id TEXT NOT NULL REFERENCES public_suggestions(id) ON DELETE CASCADE,
+ message TEXT NOT NULL, author_uid TEXT NOT NULL, author TEXT NOT NULL,
+ created_at INTEGER NOT NULL, request_id TEXT NOT NULL,
+ UNIQUE(author_uid,request_id)
+);
+CREATE INDEX IF NOT EXISTS replies_thread ON suggestion_replies(suggestion_id,created_at,id);
+CREATE TABLE IF NOT EXISTS suggestion_reply_votes (
+ reply_id TEXT NOT NULL REFERENCES suggestion_replies(id) ON DELETE CASCADE,
+ uid TEXT NOT NULL, value INTEGER NOT NULL CHECK(value IN(-1,1)),
+ PRIMARY KEY(reply_id,uid)
+);

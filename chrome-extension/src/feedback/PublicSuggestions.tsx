@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowFatUp, ArrowFatDown, Trash } from '@phosphor-icons/react';
+import { ArrowFatUp, ArrowFatDown, Trash, ChatCircle } from '@phosphor-icons/react';
+import SuggestionReplies from './SuggestionReplies';
 import { suggestionRequest, type PublicSuggestion } from '../services/publicSuggestionsService';
 
 export default function PublicSuggestions({uid,submission,active,onAccount}:{uid:string|null;submission:{item:PublicSuggestion;uid:string}|null;active:boolean;onAccount:()=>void}) {
   const [items,setItems]=useState<PublicSuggestion[]>([]),[cursor,setCursor]=useState<string|null>(null);
   const [loading,setLoading]=useState(true),[error,setError]=useState(''),[voting,setVoting]=useState<string|null>(null),[retry,setRetry]=useState(0);
+  const [openReplies,setOpenReplies]=useState<Set<string>>(()=>new Set());
   const generation=useRef(0),lock=useRef(false);
   const latestSubmission=useRef(submission);
   const [highlighted,setHighlighted]=useState<string|null>(null);
@@ -63,8 +65,10 @@ export default function PublicSuggestions({uid,submission,active,onAccount}:{uid
           <span className="suggestion-score" aria-live="polite" aria-label={`Score: ${item.upvotes-item.downvotes}`}>{item.upvotes-item.downvotes}</span>
           <button type="button" aria-label={`Downvote suggestion by ${item.author}`} aria-pressed={item.myVote===-1} disabled={voting!==null} onClick={()=>void vote(item,-1)}><ArrowFatDown weight={item.myVote===-1?'fill':'regular'} aria-hidden="true"/></button>
         </div>
+        <button type="button" className="suggestion-reply-toggle" aria-expanded={openReplies.has(item.id)} onClick={()=>setOpenReplies(old=>{const next=new Set(old);if(next.has(item.id))next.delete(item.id);else next.add(item.id);return next;})}><ChatCircle aria-hidden="true"/>{item.replyCount||0} {item.replyCount===1?'Reply':'Replies'}</button>
         {item.canDelete&&<button type="button" className="suggestion-delete" aria-label={`Delete suggestion by ${item.author}`} disabled={voting!==null} onClick={()=>void remove(item)}><Trash aria-hidden="true"/>Delete</button>}
       </div>
+      {openReplies.has(item.id)&&<SuggestionReplies key={`${item.id}:${uid}`} id={item.id} uid={uid} onAccount={onAccount} onCountChange={delta=>setItems(old=>old.map(t=>t.id===item.id?{...t,replyCount:Math.max(0,(t.replyCount||0)+delta)}:t))}/>}
     </article>)}
     {loading&&<p role="status" className="public-suggestions-empty">Loading…</p>}
     {cursor&&<button type="button" className="feedback__secondary" disabled={loading} onClick={()=>void more()}>Load more</button>}

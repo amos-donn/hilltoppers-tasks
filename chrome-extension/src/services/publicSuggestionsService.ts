@@ -1,5 +1,5 @@
 import { waitForAuthReady } from '../firebase/auth';
-export interface PublicSuggestion { id:string;message:string;author:string;createdAt:number;upvotes:number;downvotes:number;myVote:number;canDelete:boolean; }
+export interface PublicSuggestion { id:string;message:string;author:string;createdAt:number;upvotes:number;downvotes:number;myVote:number;canDelete:boolean;replyCount?:number; }
 const API='https://hilltoppers-topping-bar.danielzhang089.workers.dev/api/suggestions';
 export async function suggestionRequest(path='',body?:unknown,method=body?'POST':'GET') {
   const user=await waitForAuthReady();
