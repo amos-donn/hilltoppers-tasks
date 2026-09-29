@@ -312,5 +312,67 @@
       }
     ],
     "fetchedAt": "2026-09-28T14:16:22.417Z"
+  },
+  "2026-09-29": {
+    "heading": "Daily Bulletin | Tuesday",
+    "blocks": [
+      {
+        "kind": "heading",
+        "text": "White Day"
+      },
+      {
+        "kind": "para",
+        "text": "A reminder that our Cross Country teams are hosting their one and only home meet this afternoon beginning at 3:30 until approximately 5:00. Starting at 3:15, the exits to South Main St and Barker Ave will be closed and remain so until the races are finished. During this time, you must exit via Brantview Dr. Please be cautious of the runners as you are leaving."
+      },
+      {
+        "kind": "para",
+        "text": "If you plan on attending Harvard Model Congress in February, please make sure you register using the link Mrs. Scavitto sent you! If you need help, come by C303 or find Mr. Cushman in the Learning Center. Registration closes on September 30th, which is when scholarship applications are also due."
+      },
+      {
+        "kind": "para",
+        "text": "Ava Weaver is doing their capstone on microplastics and how it impacts our oceans, and will be doing a bottle fundraiser around campus all this week. There will be boxes labeled in all the main buildings for you to put soda bottles or cans in. All the money that is raised from this event will go to 4ocean, an organization that helps clean up trash and debris from the ocean, rivers and coastlines around the world."
+      },
+      {
+        "kind": "para",
+        "text": "Come watch Howls Moving Castle with Movie Club in Ranger 108 today at 3:30! All are welcome! Bring a friend and some snacks!"
+      },
+      {
+        "kind": "para",
+        "text": "A reminder that tomorrow we will follow the late-start schedule. Please report directly to your A block class by 9:55am."
+      },
+      {
+        "kind": "para",
+        "text": "Congratulations to MJ Kissinger who placed first in the Pro women’s category on Sunday at Jiminy Peak against a stacked category of 9 female racers from VT, ME, and even Quebec, winning the race by almost 9 seconds!"
+      },
+      {
+        "kind": "para",
+        "text": "Girls Varsity Soccer played extremely well versus Mt. Mansfield on Friday, but unfortunately lost in overtime, 2-1. The goal was scored by Cade Hansen, assisted by her sister Avery Hansen. Cade also saved a penalty kick when she was in goal the second half."
+      },
+      {
+        "kind": "para",
+        "text": "Varsity Volleyball lost to CVU, 3-0."
+      },
+      {
+        "kind": "para",
+        "text": "Happy Birthday today to Zachary Peak and Jeremiah Stalczynski!"
+      },
+      {
+        "kind": "para",
+        "text": "BOYS & GIRLS CROSS COUNTRY – HOME MEET 4:00; please dismiss the teams at 2:15"
+      },
+      {
+        "kind": "para",
+        "text": "GIRLS GOLF @ MIDDLEBURY COLLEGE 3:30; please dismiss the team at 11:30"
+      },
+      {
+        "kind": "para",
+        "text": "JV/VARSITY BOYS SOCCER @ COLCHESTER 4:30; please dismiss the team at 1:15"
+      },
+      {
+        "kind": "para",
+        "text": "VARSITY FIELD HOCKEY @ MIDDLEBURY 4:30; please dismiss the team at 12:15"
+      }
+    ],
+    "fetchedAt": "2026-09-29T13:11:09.211Z"
   }
 }
