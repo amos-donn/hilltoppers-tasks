@@ -1,6 +1,6 @@
 {
   "source": "https://stjacademy.org/?feed=eo-events",
-  "sourceUpdatedAt": "2026-09-23T18:17:20Z",
+  "sourceUpdatedAt": "2026-09-30T20:17:55Z",
   "events": [
     {
       "id": "51741-1",
@@ -985,6 +985,18 @@
       "kind": "schedule",
       "description": "",
       "url": "https://stjacademy.org/events/event/faculty-in-service-no-classes-4/"
+    },
+    {
+      "id": "53744-1",
+      "title": "Homecoming Dance",
+      "start": "2026-10-17",
+      "end": "2026-10-17",
+      "allDay": false,
+      "startTime": "19:00",
+      "endTime": "22:00",
+      "kind": "event",
+      "description": "",
+      "url": "https://stjacademy.org/events/event/homecoming-dance-2/"
     },
     {
       "id": "51745-1",
