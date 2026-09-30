@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-09-30T00:15:20.288Z",
+  "updatedAt": "2026-09-30T05:52:52.981Z",
   "source": "menus.tenkites.com",
-  "menuDate": "2026-09-29",
+  "menuDate": "2026-09-30",
   "menus": {
     "breakfast": {
       "classicKitchen": [],
@@ -9,71 +9,32 @@
     },
     "lunch": {
       "classicKitchen": [
-        "Nacho Bar",
-        "Spicy Refried Beans",
-        "Brown Rice",
-        "Roasted Confetti Corn",
-        "Nacho Cheese Sauce",
-        "Chili con Carne"
+        "Grilled Pesto-Marinated Chicken Breast",
+        "Baked Tofu Steak",
+        "Parmesan Orzo",
+        "California Blend Vegetables"
       ],
       "globalFare": [
-        "General Tso's Chicken",
-        "Braised Gochujang Tofu",
-        "Brown Rice",
-        "Stir Fry Vegetables"
+        "Black Bean Patty",
+        "Hamburger on a Bun",
+        "French Fries"
       ]
     },
     "dinner": {
       "classicKitchen": [
-        "Loaded Bacon Ranch Fries",
-        "Kansas City BBQ Pulled Pork",
-        "Baked Beans",
-        "Seasoned Corn on the Cob"
+        "Grilled Chicken Breast",
+        "Tofu Vegetable Scramble",
+        "Red Skin Mashed Potatoes",
+        "Roasted Carrots"
       ],
       "globalFare": [
-        "Garlic Thai Chicken",
-        "Capellini",
-        "Asian Style Snap Peas"
+        "Peppered Flank Steak",
+        "Beef Stew"
       ]
     }
   },
-  "daysUpdatedAt": "2026-09-29T15:39:59.820Z",
+  "daysUpdatedAt": "2026-09-30T05:52:52.982Z",
   "days": {
-    "2026-09-29": {
-      "breakfast": {
-        "classicKitchen": [],
-        "globalFare": []
-      },
-      "lunch": {
-        "classicKitchen": [
-          "Nacho Bar",
-          "Spicy Refried Beans",
-          "Brown Rice",
-          "Roasted Confetti Corn",
-          "Nacho Cheese Sauce",
-          "Chili con Carne"
-        ],
-        "globalFare": [
-          "General Tso's Chicken",
-          "Braised Gochujang Tofu",
-          "Brown Rice",
-          "Stir Fry Vegetables"
-        ]
-      },
-      "dinner": {
-        "classicKitchen": [
-          "Loaded Bacon Ranch Fries",
-          "Kansas City BBQ Pulled Pork",
-          "Baked Beans",
-          "Seasoned Corn on the Cob"
-        ],
-        "globalFare": [
-          "Garlic Thai Chicken",
-          "Capellini",
-          "Asian Style Snap Peas"
-        ]
-      }
-    },
     "2026-09-30": {
       "breakfast": {
         "classicKitchen": [],
@@ -230,6 +191,158 @@
           "Vegetable Lo Mein",
           "Steamed Green Beans and Carrots",
           "Roasted Curried Cauliflower"
+        ]
+      }
+    },
+    "2026-10-05": {
+      "breakfast": {
+        "classicKitchen": [
+          "Mild Shredded Cheddar Cheese",
+          "Fresh Clipped Spinach",
+          "Sliced Smoked Ham",
+          "Cheese Omelet",
+          "Sliced Mushrooms",
+          "Fresh Red Onion",
+          "Bell Peppers",
+          "Bacon Bits",
+          "Shredded Mozzarella Cheese"
+        ],
+        "globalFare": [
+          "Fresh Blueberries",
+          "Potato Hashbrown Patty",
+          "Scrambled Eggs",
+          "Pork Sausage Patty",
+          "Blueberry Pancakes"
+        ]
+      },
+      "lunch": {
+        "classicKitchen": [
+          "Sliced Italian Sausage",
+          "Broccoli & Carrots",
+          "Broccoli & Cheese Casserole",
+          "Sauce White"
+        ],
+        "globalFare": [
+          "Brown Rice and Pepper Casserole",
+          "Creamy Chicken Basil Curry",
+          "Indian Potatoes with Peas & Cauliflower",
+          "Baked Eggplant"
+        ]
+      },
+      "dinner": {
+        "classicKitchen": [
+          "Chicken with Red Pepper Sauce",
+          "Pasta Shells",
+          "Sauteed Spinach",
+          "Creamy Roasted Red Pepper Sauce"
+        ],
+        "globalFare": [
+          "Beef Bibimbap Bowl",
+          "Adobo Marinated Egg",
+          "Seasoned Asian Vegetables"
+        ]
+      }
+    },
+    "2026-10-06": {
+      "breakfast": {
+        "classicKitchen": [
+          "Mild Shredded Cheddar Cheese",
+          "Fresh Clipped Spinach",
+          "Sliced Smoked Ham",
+          "Cheese Omelet",
+          "Sliced Mushrooms",
+          "Fresh Red Onion",
+          "Bell Peppers",
+          "Bacon Bits",
+          "Shredded Mozzarella Cheese"
+        ],
+        "globalFare": [
+          "Cinnamon French Toast Homemade",
+          "Corned Beef Hash",
+          "Scrambled Eggs",
+          "Oven Roasted Red Bliss Potatoes"
+        ]
+      },
+      "lunch": {
+        "classicKitchen": [
+          "Fried Chicken Drumsticks",
+          "Augratin Potatoes",
+          "Green Beans with Red Peppers",
+          "Pacific Vegetable Blend"
+        ],
+        "globalFare": [
+          "Adobo Chicken",
+          "Spanish Brown Rice",
+          "Fresh Bell Peppers"
+        ]
+      },
+      "dinner": {
+        "classicKitchen": [
+          "Pot Roast",
+          "Lentils with Vegetables",
+          "Red Skin Mashed Garlic Potatoes",
+          "Garlic Roasted Root Vegetables"
+        ],
+        "globalFare": [
+          "Grilled Pork Chop",
+          "Baked Beans",
+          "Rice Pilaf Chicken with Orzo from Mix",
+          "Maple-Caramelized Brussels Sprouts"
+        ]
+      }
+    },
+    "2026-10-07": {
+      "breakfast": {
+        "classicKitchen": [
+          "Mild Shredded Cheddar Cheese",
+          "Fresh Clipped Spinach",
+          "Sliced Smoked Ham",
+          "Cheese Omelet",
+          "Sliced Mushrooms",
+          "Fresh Red Onion",
+          "Bell Peppers",
+          "Bacon Bits",
+          "Shredded Mozzarella Cheese"
+        ],
+        "globalFare": [
+          "Scrambled Eggs",
+          "Chicken Sausage Patty",
+          "Pancakes",
+          "Tater Tots",
+          "Banana",
+          "Toasted Pecans"
+        ]
+      },
+      "lunch": {
+        "classicKitchen": [
+          "Grilled Cheese",
+          "Grilled Ham and Cheese",
+          "French Fries",
+          "Peas & Carrots"
+        ],
+        "globalFare": [
+          "Taco Meat",
+          "Vegan Chorizo",
+          "Cumin Black Beans",
+          "Corn with Peppers and Onions",
+          "Nacho Cheese Sauce",
+          "Chips Doritos Cool Ranch RF WG 1 Oz",
+          "Chips Doritos Nacho Cheese RF WG 1.4 Oz"
+        ]
+      },
+      "dinner": {
+        "classicKitchen": [
+          "Seasoned Ground Beef",
+          "Cheese Lasagna Casserole",
+          "Garlic Breadstick",
+          "California Blend Vegetables",
+          "Marinara Sauce"
+        ],
+        "globalFare": [
+          "Plant-Based Chik'n Tenders",
+          "BLT Crispy Chicken Sandwich",
+          "Curly Fries",
+          "Buttered Corn"
         ]
       }
     }
