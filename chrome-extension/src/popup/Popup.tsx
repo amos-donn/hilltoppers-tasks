@@ -574,10 +574,18 @@ const Popup: React.FC = () => {
     return DateTime.fromJSDate(baseDate, { zone: EST_ZONE }).toFormat('ccc, MMM d');
   }, [baseDate]);
 
-  const menuDates = menuData?.availableDates ?? [];
+  // Navigation must not depend on a successful meal response: an empty
+  // breakfast or a network failure must still let students choose another day.
+  const menuDates = useMemo(() => {
+    const today = DateTime.fromJSDate(now, { zone: EST_ZONE }).startOf('day');
+    const dates = Array.from({ length: 15 }, (_, index) => today.plus({ days: index - 7 }).toFormat('yyyy-MM-dd'));
+    // Keep a manually selected date reachable if the popup stays open overnight.
+    return Array.from(new Set([...dates, requestedMenuDate])).sort();
+  }, [now, requestedMenuDate]);
   // Track the day that was asked for rather than the one already loaded, so the
   // arrows keep stepping while a day is still on its way in.
   const shownMenuDate = requestedMenuDate;
+  const todayMenuDate = DateTime.fromJSDate(now, { zone: EST_ZONE }).toFormat('yyyy-MM-dd');
   const menuDateIndex = menuDates.indexOf(shownMenuDate);
 
   const stepMenuDay = (delta: number) => {
@@ -1401,14 +1409,14 @@ const Popup: React.FC = () => {
                 </svg>
                 <span>Menu Website</span>
               </a>
-              {menuDateIndex >= 0 && menuDates.length > 1 && (
                 <span ref={menuScroll.anchor} className="menu-day-picker">
                   <button
                     type="button"
-                    className="menu-day-step"
+                    className={`menu-day-step${shownMenuDate > todayMenuDate ? ' toward-today' : ''}`}
                     onClick={() => stepMenuDay(-1)}
                     disabled={menuDateIndex === 0}
                     aria-label="Previous day's menu"
+                    title={shownMenuDate > todayMenuDate ? 'Previous day (toward today)' : 'Previous day'}
                   >
                     <span className="chevron chevron-prev" aria-hidden="true" />
                   </button>
@@ -1417,15 +1425,15 @@ const Popup: React.FC = () => {
                   </span>
                   <button
                     type="button"
-                    className="menu-day-step"
+                    className={`menu-day-step${shownMenuDate < todayMenuDate ? ' toward-today' : ''}`}
                     onClick={() => stepMenuDay(1)}
                     disabled={menuDateIndex === menuDates.length - 1}
                     aria-label="Next day's menu"
+                    title={shownMenuDate < todayMenuDate ? 'Next day (toward today)' : 'Next day'}
                   >
                     <span className="chevron chevron-next" aria-hidden="true" />
                   </button>
                 </span>
-              )}
             </p>
           </div>
         </AnimatedCollapse>
