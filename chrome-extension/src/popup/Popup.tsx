@@ -150,9 +150,6 @@ const Popup: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [calendarExpanded, setCalendarExpanded] = useState<boolean>(false);
   const [menuExpanded, setMenuExpanded] = useState<boolean>(false);
-  const scheduleSection = useRevealExpandedSection(scheduleExpanded);
-  const calendarSection = useRevealExpandedSection(calendarExpanded);
-  const menuSection = useRevealExpandedSection(menuExpanded);
   const [selectedDiningPeriod, setSelectedDiningPeriod] = useState<DiningMenuPayload['period']>('Lunch');
   // null follows today in the school timezone; set once the arrows move.
   const [selectedMenuDate, setSelectedMenuDate] = useState<string | null>(null);
@@ -1004,7 +1001,7 @@ const Popup: React.FC = () => {
         )}
       </section>
       {!isNoSchool && !isNetworkFailed && (
-        <section ref={scheduleSection} className={`schedule-list ${scheduleExpanded ? '' : 'collapsed'}`}>
+        <section className={`schedule-list ${scheduleExpanded ? '' : 'collapsed'}`}>
           <div className="schedule-heading">
             <button
               type="button"
@@ -1148,7 +1145,7 @@ const Popup: React.FC = () => {
         </AnimatedCollapse>
         </section>
       )}
-      <section ref={calendarSection} className={`events-list ${calendarExpanded ? '' : 'collapsed'}`}>
+      <section className={`events-list ${calendarExpanded ? '' : 'collapsed'}`}>
         <button
           type="button"
           className="schedule-toggle"
@@ -1182,7 +1179,7 @@ const Popup: React.FC = () => {
           />
         </AnimatedCollapse>
       </section>
-      <section ref={menuSection} className={`dining-list ${menuExpanded ? '' : 'collapsed'}`}>
+      <section className={`dining-list ${menuExpanded ? '' : 'collapsed'}`}>
         <button
           type="button"
           className="schedule-toggle"
