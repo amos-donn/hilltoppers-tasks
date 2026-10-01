@@ -97,3 +97,12 @@ In JSON:
 ```
 
 (Note: `Interdisciplinary Time` is dropped entirely, and `Conference Period` becomes `CP`.)
+
+## Generated menu history
+
+For the generated `public/menu.json`, the `days` map retains recorded menus
+from the previous seven calendar days, plus today and up to seven future days.
+Each successful refresh drops history older than that window. Missing historical
+days are not invented or fetched again; previously deleted menus will not be
+restored by this retention rule. `menuDate` and `menus` still describe today for
+older clients. Edit the generator, not the generated JSON.

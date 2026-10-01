@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { load } from "cheerio";
 import { extractMealItems, MENU_PARSER_VERSION } from "./menu_parser.mjs";
+import { addDays, retainPastMenus } from "./menu_history.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -114,12 +115,6 @@ async function fetchMenusForDate(date, locationGuid, knownMeta) {
  return countItems(menus) > 0 ? menus : null;
 }
 
-function addDays(date, days) {
- const d = new Date(`${date}T12:00:00Z`);
- d.setUTCDate(d.getUTCDate() + days);
- return d.toISOString().slice(0, 10);
-}
-
 async function readExisting() {
  try {
  return JSON.parse(await fs.readFile(OUT, "utf8"));
@@ -147,7 +142,7 @@ async function main() {
  return;
  }
 
- const days = { [date]: todayMenus };
+ const days = { ...retainPastMenus(existing, date), [date]: todayMenus };
  for (let offset = 1; offset <= DAYS_AHEAD; offset += 1) {
  const target = addDays(date, offset);
  if (!refreshFuture) {

@@ -115,9 +115,8 @@ function fromKey(key: string): DateTime {
 }
 
 /**
- * "Today", "Tomorrow", then the weekday name for the rest of this Sunday-first
- * week and "Next Monday" for the week after. Further out falls back to a day
- * count, which stays easier to read than a bare date.
+ * Keep nearby days conversational; include the date for everything else so
+ * past and future menus with the same weekday cannot be confused.
  */
 export function relativeLabel(dayKey: string, now: Date): string {
   const today = schoolDay(now);
@@ -126,12 +125,5 @@ export function relativeLabel(dayKey: string, now: Date): string {
   if (diff === 0) return 'Today';
   if (diff === 1) return 'Tomorrow';
   if (diff === -1) return 'Yesterday';
-  if (diff < 0) return `${-diff} days ago`;
-
-  const weeksAhead = Math.floor((diff + (today.weekday % 7)) / 7);
-  const name = day.toFormat('cccc');
-  if (weeksAhead === 0) return name;
-  if (weeksAhead === 1) return `Next ${name}`;
-  return `In ${diff} days`;
+  return day.setLocale('en-US').toFormat('ccc, MMM d');
 }
-

@@ -29,6 +29,7 @@ import Calendar from './Calendar';
 import Toppings from './Toppings';
 import AnimatedCollapse from './AnimatedCollapse';
 import { useRevealExpandedSection } from './useRevealExpandedSection';
+import { useMenuScrollAnchor } from './useMenuScrollAnchor';
 
 /** Opens one of the extension's own pages in a tab. */
 function openExtensionPage(page: string) {
@@ -185,6 +186,7 @@ const Popup: React.FC = () => {
 
   const [now, setNow] = useState<Date>(() => (debugTestTime ?? DateTime.now().setZone(EST_ZONE).toJSDate()));
   const requestedMenuDate = selectedMenuDate ?? DateTime.fromJSDate(now, { zone: EST_ZONE }).toFormat('yyyy-MM-dd');
+  const menuScroll = useMenuScrollAnchor(menuExpanded, selectedDiningPeriod, requestedMenuDate, menuLoading, menuData, menuError);
 
   const scheduleDate = useMemo(
     () =>
@@ -581,6 +583,7 @@ const Popup: React.FC = () => {
   const stepMenuDay = (delta: number) => {
     const nextDate = menuDateIndex >= 0 ? menuDates[menuDateIndex + delta] : undefined;
     if (!nextDate) return;
+    menuScroll.capture();
     hasManualDiningSelectionRef.current = true;
     setMenuLoading(true);
     setMenuError(null);
@@ -1249,6 +1252,7 @@ const Popup: React.FC = () => {
                 </button>
               ))}
             </div>
+            <div ref={menuScroll.content} style={{ display: 'flow-root' }}>
             {menuLoading ? (
               <p className="dining-meta dining-meta-loading">
                 <svg
@@ -1373,6 +1377,7 @@ const Popup: React.FC = () => {
                 ) : null}
               </>
             )}
+            </div>
             <p className="dining-meta">
               <a
                 className="dining-link"
@@ -1397,7 +1402,7 @@ const Popup: React.FC = () => {
                 <span>Menu Website</span>
               </a>
               {menuDateIndex >= 0 && menuDates.length > 1 && (
-                <span className="menu-day-picker">
+                <span ref={menuScroll.anchor} className="menu-day-picker">
                   <button
                     type="button"
                     className="menu-day-step"
