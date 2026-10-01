@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { load } from "cheerio";
+import { extractMealItems, MENU_PARSER_VERSION } from "./menu_parser.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -17,7 +18,6 @@ const DAYS_AHEAD = 7;
 // re-read twice a day.
 const FUTURE_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
-const uniq = (arr) => [...new Set(arr.map((s) => s.trim()).filter(Boolean))];
 const norm = (s) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
 async function fetchHtml(url) {
@@ -67,22 +67,6 @@ function buildDayUrl(date) {
  return u.toString();
 }
 
-function extractSectionItems(html, sectionName) {
- const $ = load(html);
- const target = norm(sectionName);
-
- const $course = $(".k10-course.k10-course_level_1").filter((_, el) => {
- const title = norm($(el).find(".k10-course__name_level_1").first().text());
- return title === target;
- }).first();
-
- if ($course.length === 0) return [];
-
- return uniq(
- $course.find(".k10-recipe__name").map((_, el) => $(el).text()).get()
- );
-}
-
 const MEAL_PLAN = [
  { key: "breakfast", label: "breakfast" },
  { key: "lunch", label: "lunch" },
@@ -124,10 +108,7 @@ async function fetchMenusForDate(date, locationGuid, knownMeta) {
  if (!menuGuid) continue;
 
  const mealHtml = await fetchHtml(buildMenuUrl({ locationGuid, date, menuGuid }));
- menus[meal.key] = {
- classicKitchen: extractSectionItems(mealHtml, "Classic Kitchen"),
- globalFare: extractSectionItems(mealHtml, "Global Fare")
- };
+ menus[meal.key] = extractMealItems(mealHtml, meal.key);
  }
 
  return countItems(menus) > 0 ? menus : null;
@@ -157,7 +138,8 @@ async function main() {
  const daysAge = existing?.daysUpdatedAt
  ? Date.now() - Date.parse(existing.daysUpdatedAt)
  : Number.POSITIVE_INFINITY;
- const refreshFuture = !(daysAge < FUTURE_MAX_AGE_MS);
+ // Re-read cached days after parser changes so empty breakfasts do not linger.
+ const refreshFuture = existing?.parserVersion !== MENU_PARSER_VERSION || !(daysAge < FUTURE_MAX_AGE_MS);
 
  const todayMenus = await fetchMenusForDate(date, locationGuid, baseMeta);
  if (!todayMenus) {
@@ -178,6 +160,7 @@ async function main() {
  }
 
  const payload = {
+ parserVersion: MENU_PARSER_VERSION,
  updatedAt: new Date().toISOString(),
  source: "menus.tenkites.com",
  // menuDate and menus describe today. Versions of the extension released
