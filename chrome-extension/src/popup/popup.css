@@ -527,8 +527,29 @@ header {
   opacity: 0.3;
 }
 
-.menu-day-step.toward-today .chevron {
-  border-top-color: #16a34a;
+.menu-day-step.toward-today {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+/* A separate circle adds emphasis without changing the compact button layout. */
+.menu-day-step.toward-today::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #d9efdf;
+  transition: background 0.15s ease;
+}
+
+.menu-day-step.toward-today:hover:not(:disabled)::before {
+  background: #bfe2c9;
 }
 
 .menu-day-label {
