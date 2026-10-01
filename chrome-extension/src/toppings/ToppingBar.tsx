@@ -10,6 +10,8 @@ import ToppingSubmissions from './ToppingSubmissions';
 import InstalledToppingManager from './InstalledToppingManager';
 import OwnToppingSubmissions from './OwnToppingSubmissions';
 
+const TOPPING_GUIDE_OPENED_KEY = 'hilltoppers.toppingGuideOpened';
+
 export default function ToppingBar({ onAccount, active = true }: { onAccount?: () => void; active?: boolean }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accountReady, setAccountReady] = useState(false);
@@ -63,6 +65,23 @@ export default function ToppingBar({ onAccount, active = true }: { onAccount?: (
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('popular');
   const [readingGuide, setReadingGuide] = useState(false);
+  const [guideOpened, setGuideOpened] = useState(() => {
+    try { return localStorage.getItem(TOPPING_GUIDE_OPENED_KEY) === '1'; }
+    catch { return false; }
+  });
+  const openGuide = () => {
+    setGuideOpened(true);
+    setReadingGuide(true);
+    try { localStorage.setItem(TOPPING_GUIDE_OPENED_KEY, '1'); }
+    catch { /* Keep the guide usable when storage is unavailable. */ }
+  };
+  useEffect(() => {
+    const syncGuideOpened = (event: StorageEvent) => {
+      if (event.key === TOPPING_GUIDE_OPENED_KEY && event.newValue === '1') setGuideOpened(true);
+    };
+    window.addEventListener('storage', syncGuideOpened);
+    return () => window.removeEventListener('storage', syncGuideOpened);
+  }, []);
   const [creating, setCreating] = useState(false);
   const [previewAdded, setPreviewAdded] = useState(false);
   const [publishing, setPublishing] = useState(() => sessionStorage.getItem('resumeToppingPublish') === 'true');
@@ -192,10 +211,10 @@ export default function ToppingBar({ onAccount, active = true }: { onAccount?: (
         </div>
       </section>
       <InstalledToppingManager onChange={refresh} onLayoutChange={keepInstallPosition}/>
-      {user&&<OwnToppingSubmissions onEdit={t=>{setEditingId(t.id);setHeightMode(t.heightMode||'fixed');setPublishDraft({name:t.name,description:t.description,url:t.url});setSelectedIcon(t.icon);setImageData(t.imageData||t.image);setError('');setPublishing(true);}} key={user.uid} revision={`${publishing}:${reviewing}:${items.map(t=>t.id).join(",")}`}/>}
+      {user&&<OwnToppingSubmissions onUnpublished={()=>{void run(async()=>{});}} onEdit={t=>{setEditingId(t.id);setHeightMode(t.heightMode||'fixed');setPublishDraft({name:t.name,description:t.description,url:t.url});setSelectedIcon(t.icon);setImageData(t.imageData||t.image);setError('');setPublishing(true);}} key={user.uid} revision={`${publishing}:${reviewing}:${items.map(t=>t.id).join(",")}`}/>}
       <section className="catalog"><div className="catalog-heading"><h2>Find your next Topping</h2><div className="filters"><input aria-label="Search Toppings" type="search" placeholder="Search Toppings…" value={search} onChange={e=>setSearch(e.target.value)}/><select aria-label="Sort Toppings" value={sort} onChange={e=>{ranking.current=new Map(items.map(t=>[t.id,{users:t.users,createdAt:t.createdAt}]));setSort(e.target.value);}}><option value="popular">Most users</option><option value="newest">Newest</option></select></div></div>
       {error && <p className="catalog-error error" role="alert">{error} <button onClick={()=>void run(async()=>{})} disabled={busy}>Retry</button></p>}
-      {loading ? <p className="empty" role="status">Loading Toppings…</p> : <div className="card-grid">{!search.trim()&&<article className="topping-card create-card"><button type="button" onClick={()=>setReadingGuide(true)}><span className="create-plus" aria-hidden="true">＋</span><h3>Make your own Topping</h3><p>Learn about making your own Topping. You don&apos;t have to know how to code.</p></button></article>}{visible.map(t=><article className="topping-card" key={t.id}><button className="preview" aria-label={`View ${t.name}`} onClick={()=>setDetail(t)}><img src={t.image==='builtin:ask-sja'?'toppings/ask-sja.svg':t.image} alt={`${t.name} preview`} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src='toppings/unavailable.svg';}}/></button><div className="card-body"><div className="card-title"><button onClick={()=>setDetail(t)}>{t.name}</button><div className="action-with-note card-action"><ToppingInstallButton installed={t.installed} confirmation={notes[t.id]} busy={busy} onClick={event=>void install(t,event.currentTarget)}/></div></div><p className="author">By {t.author}</p><p className="description">{t.description}</p><div className="card-stats"><button onClick={()=>setDetail(t)} className="rating">{stars(t)}<span>{t.rating==null?'Not rated yet':`${t.rating.toFixed(1)} (${t.ratingCount})`}</span></button><span className="users">{t.users.toLocaleString()} Users</span></div></div></article>)}</div>}
+      {loading ? <p className="empty" role="status">Loading Toppings…</p> : <div className="card-grid">{!search.trim()&&<article className={`topping-card create-card${guideOpened ? "" : " create-card--unopened"}`}><button type="button" onClick={openGuide}><span className="create-plus" aria-hidden="true">＋</span><h3>Make your own Topping</h3><p>Learn about making your own Topping. You don&apos;t have to know how to code.</p></button></article>}{visible.map(t=><article className="topping-card" key={t.id}><button className="preview" aria-label={`View ${t.name}`} onClick={()=>setDetail(t)}><img src={t.image==='builtin:ask-sja'?'toppings/ask-sja.svg':t.image} alt={`${t.name} preview`} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src='toppings/unavailable.svg';}}/></button><div className="card-body"><div className="card-title"><button onClick={()=>setDetail(t)}>{t.name}</button><div className="action-with-note card-action"><ToppingInstallButton installed={t.installed} confirmation={notes[t.id]} busy={busy} onClick={event=>void install(t,event.currentTarget)}/></div></div><p className="author">By {t.author}</p><p className="description">{t.description}</p><div className="card-stats"><button onClick={()=>setDetail(t)} className="rating">{stars(t)}<span>{t.rating==null?'Not rated yet':`${t.rating.toFixed(1)} (${t.ratingCount})`}</span></button><span className="users">{t.users.toLocaleString()} Users</span></div></div></article>)}</div>}
       {!loading&&!error&&!visible.length&&<p className="empty">{search?'No Toppings match your search.':'The bar is ready for its first Topping.'}</p>}
       </section>
     </main>
