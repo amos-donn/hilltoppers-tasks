@@ -7,20 +7,30 @@ const section = (name, items) => `<div class="k10-course k10-course_level_1">
  ${items.map((item) => `<span class="k10-recipe__name">${item}</span>`).join("")}
 </div>`;
 
-test("breakfast includes the school's breakfast stations", () => {
+test("breakfast provisionally puts Jumpstart on the left and excludes unrelated stations", () => {
  const html = section(" Jumpstart ", ["Scrambled Eggs", "French Toast", "Scrambled Eggs"]) +
  section("Sweet Shop", ["Blueberry Muffin"]) + section("Soupside", ["Oatmeal"]);
  assert.deepEqual(extractMealItems(html, "breakfast"), {
- classicKitchen: ["Scrambled Eggs", "French Toast"],
- globalFare: ["Blueberry Muffin", "Oatmeal"]
+ classicKitchen: [],
+ globalFare: ["Scrambled Eggs", "French Toast"]
  });
 });
 
-test("breakfast includes new stations without losing legacy station items", () => {
+test("Monday breakfast preserves physical columns without pulling in the Greens list", () => {
  const html = section("Classic Kitchen", ["Eggs"]) + section("Global Fare", ["Potatoes"]) +
- section("Bakery", ["Toast"]);
+ section("Greens", ["Cereal", "Yogurt", "Jam"]) + section("Bakery", ["Toast"]);
  assert.deepEqual(extractMealItems(html, "breakfast"), {
- classicKitchen: ["Eggs"], globalFare: ["Potatoes", "Toast"]
+ classicKitchen: ["Eggs"], globalFare: ["Potatoes"]
+ });
+});
+
+test("recognizes Jump Start spelling only for breakfast", () => {
+ const html = section(" Jump   Start ", ["Scrambled Eggs"]);
+ assert.deepEqual(extractMealItems(html, "breakfast"), {
+ classicKitchen: [], globalFare: ["Scrambled Eggs"]
+ });
+ assert.deepEqual(extractMealItems(html, "lunch"), {
+ classicKitchen: [], globalFare: []
  });
 });
 

@@ -63,6 +63,17 @@ one folder.
   is expanded. `schedulePreferences.lunchPeriod` (1–5) exists in storage
   but nothing reads it yet.
 - **CP**: the 20-minute block at the end of most days. Not a class.
+- **Menu columns are physical locations**: the popup's left column is Global
+  Fare and its right column is Classic Kitchen, corresponding to where students
+  actually pick up food in the dining hall. They are not arbitrary groups for
+  balancing the layout. Do not assign other source sections to either column
+  merely to make dishes appear. A section's name or meal period does not prove
+  its physical location; confirm the mapping with the user when it is unknown.
+  At the user's request, breakfast Jumpstart (also spelled Jump Start) is
+  provisionally mapped to the left column; Sweet Shop and Soupside are excluded
+  from both columns. This follows the user's uncertain recollection on
+  October 1, 2026, not a confirmed location check. Keep other unmapped sections
+  (including Greens) out of both columns; do not restore a breakfast catch-all.
 - **Grades**: a block may carry `grades: [9, 10]`; the popup filters by the
   user's grade, derived from `graduationYear`.
 
