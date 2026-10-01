@@ -412,5 +412,55 @@
       }
     ],
     "fetchedAt": "2026-09-30T14:26:22.962Z"
+  },
+  "2026-10-01": {
+    "heading": "Daily Bulletin | Thursday",
+    "blocks": [
+      {
+        "kind": "heading",
+        "text": "White Day"
+      },
+      {
+        "kind": "para",
+        "text": "We will have a Pep Chapel tomorrow in the Alumni Gym. Please report directly to the gym by 7:55am."
+      },
+      {
+        "kind": "para",
+        "text": "Of the roughly 700 people on our meal plan, 150 to 200 people come to lunch each day without their ID cards. That’s a lot of people, and it makes the job of our Food Services team more difficult. Please be sure to bring your ID card to lunch and have it ready when you get to the front of the line. Think of it as a small way to say thank you to the people who arrive hours before most of us and work all day to feed us. Having your ID ready is one easy way we can take care of them."
+      },
+      {
+        "kind": "para",
+        "text": "Student Government will meet right after school today in Fuller basement. This meeting includes all newly elected Class Officers. Please see Mr. Ryan or Raine if you have any questions or conflicts."
+      },
+      {
+        "kind": "para",
+        "text": "Yes and, Academy Improv will meet this Friday at 3:30 in the Black Box Theatre. Seek and ye shall find."
+      },
+      {
+        "kind": "para",
+        "text": "Tomorrow after school, a group of twelve students and two chaperones from Spain will be arriving at SJA. They will be visiting our school from this coming Monday, October 5 to Thursday, October 15. They will be attending classes with their SJA host siblings and, hopefully, you will see them around. If you do, please say hello and help them feel at home."
+      },
+      {
+        "kind": "para",
+        "text": "We know it’s only Thursday, but to get you excited for Pep Chapel, here’s Michael’s Joke of the Week: What has more lives than a cat?….A frog, because it croaks every day."
+      },
+      {
+        "kind": "para",
+        "text": "Happy Birthday today to Mariano Diaz Beltran, Malia Ignjatovic, Fletcher O’Malley, Asa Sukkaew, and Aven Thomas! Happy Birthday tomorrow to Owan Holt, on Saturday to Aidan Beaucage, Meara Garnes, Zayne Moshinskie, Christian Rutherford, Harley-Anne White, and Lincoln Wootton, and on Sunday to Alejandro Casado Redondo, Roberto Casado Redondo, Scott Davis, and David Raileanu!"
+      },
+      {
+        "kind": "para",
+        "text": "GIRLS GOLF @ STOWE COUNRY CLUB 11:40; please release the team at 9:00"
+      },
+      {
+        "kind": "para",
+        "text": "VARSITY FIELD HOCKEY – HOME vs. LYNDON INSTITUTE 4:00"
+      },
+      {
+        "kind": "para",
+        "text": "JV FIELD HOCKEY – HOME vs. NORTH COUNTRY 5:15"
+      }
+    ],
+    "fetchedAt": "2026-10-01T16:35:19.351Z"
   }
 }
