@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS toppings (
  url TEXT NOT NULL, image TEXT NOT NULL, author_uid TEXT NOT NULL,
  author TEXT NOT NULL, graduation_year INTEGER, created_at INTEGER NOT NULL,
  height_mode TEXT NOT NULL DEFAULT 'fixed' CHECK(height_mode IN ('fixed','content')),
+ screen_capture INTEGER NOT NULL DEFAULT 0 CHECK(screen_capture IN (0,1)),
  hidden INTEGER NOT NULL DEFAULT 0, icon TEXT NOT NULL DEFAULT 'sparkle', status TEXT NOT NULL DEFAULT 'pending'
 );
 CREATE TABLE IF NOT EXISTS topping_users (

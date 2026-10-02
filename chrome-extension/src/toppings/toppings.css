@@ -331,3 +331,8 @@
 .own-submission-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
 .own-submission-unpublish { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; border-radius:8px; color:#778371; }
 .own-submission-unpublish:hover:not(:disabled) { color:#a44740; background:#faeeec; }
+
+.topping-permissions { border:0; padding:0; margin:16px 0; }
+.topping-permissions legend { font-size:13px; color:#60735e; margin-bottom:8px; }
+.topping-permissions label { display:flex; align-items:center; gap:8px; font-size:14px; }
+.topping-permissions input { margin:0; accent-color:#577962; }

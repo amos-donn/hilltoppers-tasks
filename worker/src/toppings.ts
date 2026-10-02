@@ -64,14 +64,14 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
   if (path === '/api/toppings/submissions' && request.method === 'GET') {
     if (!user) return respond({error:'Sign in to continue.'},401);
     if (new URL(request.url).searchParams.get('own') === '1') {
-      const rows=await env.TOPPINGS_DB.prepare('SELECT id,name,description,image,url,icon,height_mode AS heightMode,status,hidden FROM toppings WHERE author_uid=? ORDER BY created_at DESC').bind(user.uid).all();
+      const rows=await env.TOPPINGS_DB.prepare('SELECT id,name,description,image,url,icon,height_mode AS heightMode,screen_capture AS screenCapture,status,hidden FROM toppings WHERE author_uid=? ORDER BY created_at DESC').bind(user.uid).all();
       const drafts=await env.TOPPINGS_DB.prepare('SELECT r.topping_id,r.payload,r.status FROM topping_revisions r JOIN toppings t ON t.id=r.topping_id WHERE t.author_uid=? AND r.status!="approved"').bind(user.uid).all<{topping_id:string;payload:string;status:string}>();
-      const toppings=rows.results.map((t:any)=>{const draft=drafts.results.find(r=>r.topping_id===t.id);return draft?{...t,...JSON.parse(draft.payload),revisionStatus:draft.status}:t;});
+      const toppings=rows.results.map((t:any)=>({...t,screenCapture:t.screenCapture===1})).map((t:any)=>{const draft=drafts.results.find(r=>r.topping_id===t.id);return draft?{...t,...JSON.parse(draft.payload),revisionStatus:draft.status}:t;});
       return respond({toppings});
     }
-    const rows=await env.TOPPINGS_DB.prepare(`SELECT id,name,description,url,image,icon,height_mode AS heightMode,author,status,created_at AS createdAt FROM toppings WHERE hidden=0 AND (author_uid=? OR (?=1 AND status='pending')) ORDER BY created_at DESC LIMIT 100`).bind(user.uid,canReview?1:0).all();
+    const rows=await env.TOPPINGS_DB.prepare(`SELECT id,name,description,url,image,icon,height_mode AS heightMode,screen_capture AS screenCapture,author,status,created_at AS createdAt FROM toppings WHERE hidden=0 AND (author_uid=? OR (?=1 AND status='pending')) ORDER BY created_at DESC LIMIT 100`).bind(user.uid,canReview?1:0).all();
     const drafts=await env.TOPPINGS_DB.prepare("SELECT t.id,t.author,r.payload FROM topping_revisions r JOIN toppings t ON t.id=r.topping_id WHERE r.status='pending' AND t.hidden=0 AND (t.author_uid=? OR ?=1)").bind(user.uid,canReview?1:0).all<{id:string;author:string;payload:string}>();
-    return respond({canReview,toppings:[...rows.results.filter((t:any)=>!drafts.results.some(r=>r.id===t.id)),...drafts.results.map(r=>({id:r.id,author:r.author,...JSON.parse(r.payload),status:'pending'}))]});
+    return respond({canReview,toppings:[...rows.results.map((t:any)=>({...t,screenCapture:t.screenCapture===1})).filter((t:any)=>!drafts.results.some(r=>r.id===t.id)),...drafts.results.map(r=>({id:r.id,author:r.author,...JSON.parse(r.payload),status:'pending'}))]});
   }
   const reviewPath=/^\/api\/toppings\/([a-zA-Z0-9-]{1,64})\/review$/.exec(path);
   if (reviewPath && request.method==='POST') {
@@ -117,7 +117,7 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
     return respond({ ok: true });
   }
   if (path === '/api/toppings' && request.method === 'GET') {
-    const rows = await env.TOPPINGS_DB.prepare(`SELECT t.id, t.name, t.description, t.url, t.image, t.icon, t.height_mode AS heightMode,
+    const rows = await env.TOPPINGS_DB.prepare(`SELECT t.id, t.name, t.description, t.url, t.image, t.icon, t.height_mode AS heightMode,t.screen_capture AS screenCapture,
       t.author, t.graduation_year AS graduationYear, t.created_at AS createdAt,
       (SELECT COUNT(*) FROM topping_users u WHERE u.topping_id=t.id) AS users,
       (SELECT AVG(stars) FROM topping_ratings r WHERE r.topping_id=t.id) AS rating,
@@ -126,7 +126,7 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
       (SELECT stars FROM topping_ratings r WHERE r.topping_id=t.id AND r.uid=?) AS myRating,
       t.author_uid=? AS owned
       FROM toppings t WHERE hidden=0 AND status='approved' ORDER BY users DESC, created_at DESC, id`).bind(installation, user?.uid || '', user?.uid || '').all();
-    return respond({ toppings: rows.results });
+    return respond({ toppings: rows.results.map((t:any)=>({...t,screenCapture:t.screenCapture===1})) });
   }
   if (!user) return respond({ error: 'Sign in to continue.' }, 401);
   const publishing = path === '/api/toppings' && request.method === 'POST';
@@ -150,6 +150,8 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
       (body.graduationYear != null && (!Number.isInteger(body.graduationYear) || body.graduationYear < 1950 || body.graduationYear > 2100))) {
       return respond({ error: 'Enter a name, an HTTPS page URL, and a valid preview image.' }, 400);
     }
+    const screenCapture=body.screenCapture === undefined ? false : body.screenCapture;
+    if(typeof screenCapture!=='boolean')return respond({error:'Choose a valid screen sharing permission.'},400);
     const heightMode=body.heightMode??'fixed';
     if(!['fixed','content'].includes(heightMode))return respond({error:'Choose a valid height mode.'},400);
     const icon = body.icon;
@@ -157,9 +159,9 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
     const id = crypto.randomUUID();
     const imageURL=upload ? `${new URL(request.url).origin}/api/toppings/${id}/image` : body.image;
     const insert=env.TOPPINGS_DB.prepare(`INSERT INTO toppings
-      (id,name,description,url,image,author_uid,author,graduation_year,created_at,icon,height_mode,status)
-      SELECT ?,?,?,?,?,?,?,?,?,?,?,'approved' WHERE (SELECT COUNT(*) FROM toppings WHERE author_uid=? AND hidden=0)<20`)
-      .bind(id, body.name.trim(), description.trim(), body.url, imageURL, user.uid, author, null, Date.now(), icon, heightMode, user.uid);
+      (id,name,description,url,image,author_uid,author,graduation_year,created_at,icon,height_mode,screen_capture,status)
+      SELECT ?,?,?,?,?,?,?,?,?,?,?,?,'approved' WHERE (SELECT COUNT(*) FROM toppings WHERE author_uid=? AND hidden=0)<20`)
+      .bind(id, body.name.trim(), description.trim(), body.url, imageURL, user.uid, author, null, Date.now(), icon, heightMode, Number(screenCapture), user.uid);
     const operations=[insert];
     if(upload) operations.push(env.TOPPINGS_DB.prepare('INSERT INTO topping_images(topping_id,mime,data) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM toppings WHERE id=?)').bind(id,upload.mime,upload.data,id));
     const [result]=await env.TOPPINGS_DB.batch(operations);
@@ -169,16 +171,18 @@ export async function handleToppings(request: Request, env: ToppingsEnv): Promis
 
   const editPath=/^\/api\/toppings\/([a-zA-Z0-9-]{1,64})\/edit$/.exec(path);
   if(editPath && request.method==='POST') {
-    const current=await env.TOPPINGS_DB.prepare('SELECT author_uid,image,height_mode AS heightMode FROM toppings WHERE id=? AND hidden=0').bind(editPath[1]).first<{author_uid:string;image:string;heightMode:string}>();
+    const current=await env.TOPPINGS_DB.prepare('SELECT author_uid,image,height_mode AS heightMode,screen_capture AS screenCapture FROM toppings WHERE id=? AND hidden=0').bind(editPath[1]).first<{author_uid:string;image:string;heightMode:string;screenCapture:number}>();
     if(!current)return respond({error:'This Topping is no longer available.'},404);
     if(current.author_uid!==user.uid)return respond({error:'Only the author can edit this Topping.'},403);
     const body=await readBody(request,720000);
     const upload=uploadedImage(body?.imageData);
     if(!body || typeof body.name!=='string' || body.name.trim().length<2 || body.name.length>48 || typeof body.description!=='string' || body.description.length>180 || !publicHTTPS(body.url) || !iconIds.includes(body.icon) || (body.imageData!=null&&!upload))return respond({error:'Check the name, URL, icon and preview image.'},400);
+    const screenCapture=body.screenCapture === undefined ? current.screenCapture===1 : body.screenCapture;
+    if(typeof screenCapture!=='boolean')return respond({error:'Choose a valid screen sharing permission.'},400);
     const heightMode=body.heightMode??current.heightMode;
     if(!['fixed','content'].includes(heightMode))return respond({error:'Choose a valid height mode.'},400);
     const image=upload?`${new URL(request.url).origin}/api/toppings/${editPath[1]}/image?v=${Date.now()}`:current.image;
-    const operations=[env.TOPPINGS_DB.prepare("UPDATE toppings SET name=?,description=?,url=?,icon=?,image=?,height_mode=?,status='approved' WHERE id=? AND hidden=0").bind(body.name.trim(),body.description.trim(),body.url,body.icon,image,heightMode,editPath[1])];
+    const operations=[env.TOPPINGS_DB.prepare("UPDATE toppings SET name=?,description=?,url=?,icon=?,image=?,height_mode=?,screen_capture=?,status='approved' WHERE id=? AND hidden=0").bind(body.name.trim(),body.description.trim(),body.url,body.icon,image,heightMode,Number(screenCapture),editPath[1])];
     if(upload)operations.push(env.TOPPINGS_DB.prepare('INSERT INTO topping_images(topping_id,mime,data) VALUES (?,?,?) ON CONFLICT(topping_id) DO UPDATE SET mime=excluded.mime,data=excluded.data').bind(editPath[1],upload.mime,upload.data));
     operations.push(env.TOPPINGS_DB.prepare('DELETE FROM topping_revisions WHERE topping_id=?').bind(editPath[1]));
     await env.TOPPINGS_DB.batch(operations);

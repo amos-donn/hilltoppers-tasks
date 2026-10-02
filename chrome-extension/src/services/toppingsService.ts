@@ -6,6 +6,7 @@ export interface Topping {
   users: number; rating: number | null; ratingCount: number;
   installed: boolean; myRating: number | null; owned: boolean;
   preview?: boolean;
+  screenCapture?: boolean;
   heightMode?: 'fixed' | 'content';
 }
 const API = 'https://hilltoppers-topping-bar.danielzhang089.workers.dev/api/toppings';
@@ -104,10 +105,10 @@ function parsePreviewUrl(address: string): URL {
   } catch { /* Use the same message for malformed and unsupported addresses. */ }
   throw new Error('Enter an HTTPS URL or a local address such as http://localhost:5173.');
 }
-export async function savePreviewTopping(name: string, address: string, heightMode: 'fixed' | 'content' = 'fixed'): Promise<Topping> {
+export async function savePreviewTopping(name: string, address: string, heightMode: 'fixed' | 'content' = 'fixed', screenCapture = false): Promise<Topping> {
   const url = parsePreviewUrl(address);
   const topping: Topping = {
-    id: 'local-preview', heightMode, name: name.trim() || 'Preview Topping',
+    id: 'local-preview', heightMode, screenCapture, name: name.trim() || 'Preview Topping',
     description: 'A temporary Topping preview.', url: url.href,
     image: '', author: 'Only you', graduationYear: null, createdAt: Date.now(), users: 0,
     rating: null, ratingCount: 0, installed: true, myRating: null, owned: true, preview: true

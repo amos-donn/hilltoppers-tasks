@@ -229,3 +229,17 @@ validates those same fields on resize messages and only accepts finite positive
 numeric heights in content mode, clamped to 120–10,000 CSS pixels. Taller content
 can still scroll inside the frame. Until a valid report arrives, the existing
 fixed-height layout stays usable; missing replies never hide the Topping.
+
+### Topping screen sharing
+
+Apply `topping-screen-sharing-migration.sql` once to an existing Toppings database
+before deploying. Publish/edit accepts the boolean `screenCapture`, defaulting
+to false for new Toppings. Omitted values on edits preserve the existing setting.
+Catalog and submission responses include this flag.
+
+Enable **Permissions → Screen sharing** in Publish, Edit, or Preview to allow
+that iframe to request screen capture. Other Toppings explicitly deny
+`display-capture`. Your webpage must provide its own Share screen button and
+call `getDisplayMedia()` from the user's click. The browser still asks the user
+to choose and authorize a screen/window each time; this setting does not grant
+automatic access or share extension account data. Existing Toppings stay off.

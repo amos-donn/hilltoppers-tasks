@@ -40,6 +40,7 @@ function ToppingFrame({ topping }: { topping: Topping }) {
 
   return <div id={`topping-${topping.id}`} className="topping-content" style={topping.heightMode==='content'&&contentHeight!==null?{height:contentHeight+2}:undefined}>
     <iframe ref={frame} src={source.href} title={`${topping.name} topping`}
+      allow={topping.screenCapture === true ? 'display-capture' : "display-capture 'none'"}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
       referrerPolicy="no-referrer" />
   </div>;

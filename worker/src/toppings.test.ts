@@ -224,3 +224,25 @@ test('height modes default to fixed, persist through publishing and edits, and r
  expect((await request('','POST',{...listing,heightMode:'huge'})).status).toBe(400);
  expect((await request('/'+id+'/edit','POST',{...listing,heightMode:'huge'})).status).toBe(400);
 });
+
+test('screen sharing is opt-in, author-controlled, and preserved for older clients',async()=>{
+ auth.user={...student,uid:'capture-author'};
+ const get=async(id:string)=>(await (await request()).json() as any).toppings.find((t:any)=>t.id===id);
+ const {id}=await (await request('','POST',{...listing,screenCapture:true})).json() as any;
+ expect((await get(id)).screenCapture).toBe(true);
+ expect((await (await request('/submissions?own=1')).json() as any).toppings.find((t:any)=>t.id===id).screenCapture).toBe(true);
+ expect((await request('/'+id+'/edit','POST',listing)).status).toBe(200);
+ expect((await get(id)).screenCapture).toBe(true);
+ auth.user={...student,uid:'other-capture-author'};
+ expect((await request('/'+id+'/edit','POST',{...listing,screenCapture:false})).status).toBe(403);
+ auth.user={...student,uid:'capture-author'};
+ expect((await request('/'+id+'/edit','POST',{...listing,screenCapture:false})).status).toBe(200);
+ expect((await get(id)).screenCapture).toBe(false);
+ const {id:legacy}=await (await request('','POST',listing)).json() as any;
+ expect((await get(legacy)).screenCapture).toBe(false);
+ expect((await get('ask-sja')).screenCapture).toBe(false);
+ for(const screenCapture of ['true',1,null,{}]) {
+  expect((await request('','POST',{...listing,screenCapture})).status).toBe(400);
+  expect((await request('/'+id+'/edit','POST',{...listing,screenCapture})).status).toBe(400);
+ }
+});
