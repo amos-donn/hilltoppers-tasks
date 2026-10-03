@@ -184,8 +184,37 @@ function kindFor(item, resource) {
   return KIND_BY_TYPE[item.type] ?? null;
 }
 
+// The to-do payload never says whether an item was already handed in, so ask
+// Canvas which past-due assignments still have NO submission at all. An
+// overdue item that is *not* on this list has a submission — handed in on
+// paper and graded, turned in online, or excused — and must not show as
+// overdue. Returns a Set of assignment ids, or null when we cannot tell
+// (request failed, or a full page that might be cut off): callers then fail
+// open and show the list exactly as Canvas gave it.
+export async function fetchMissingIds(base, { token, relay, signal, fetchImpl = fetch } = {}) {
+  const target = buildUrl(base, '/api/v1/users/self/missing_submissions', { per_page: 100 });
+  let payload;
+  try {
+    payload = await fetchJson(target, { token, relay, signal, fetchImpl });
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(payload)) return null;
+  const ids = new Set();
+  for (const entry of payload) {
+    if (!entry || typeof entry !== 'object') continue;
+    const id = Number(entry.id);
+    if (Number.isFinite(id)) ids.add(id);
+  }
+  // A completely full page may have been cut off; hiding items off an
+  // incomplete list would erase real work, so treat it as unknown too.
+  return ids.size >= 100 ? null : ids;
+}
+
 // Turns the /users/self/todo_items payload into flat display rows.
-export function parseTodo(payload, courses) {
+// `missing` is the Set from fetchMissingIds: overdue "submitting" items
+// outside it already have a submission and are dropped.
+export function parseTodo(payload, courses, { missing = null, now = Date.now() } = {}) {
   if (!Array.isArray(payload)) return [];
   const names = courses instanceof Map ? courses : parseCourses(courses);
   const seen = new Set();
@@ -197,6 +226,21 @@ export function parseTodo(payload, courses) {
     const url = safeUrl(entry.html_url) || safeUrl(resource.html_url);
     const dueAt = toTime(entry.due_at) ?? toTime(resource.due_at) ?? toTime(resource.post_at);
     const courseId = Number(entry.course_id ?? resource.course_id ?? NaN);
+    // Past due and absent from the missing list means a submission exists
+    // (graded paper homework, submitted work, excused) — hide it. Only
+    // "submitting" items with a known assignment id qualify; future-due
+    // items are never on the missing list, so they are left alone.
+    const assignmentId = Number(entry.assignment?.id ?? entry.quiz?.assignment_id ?? NaN);
+    if (
+      missing instanceof Set &&
+      entry.type === 'submitting' &&
+      dueAt != null &&
+      dueAt < now &&
+      Number.isFinite(assignmentId) &&
+      !missing.has(assignmentId)
+    ) {
+      continue;
+    }
     const key = `${url ?? ''}|${title}|${dueAt ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);

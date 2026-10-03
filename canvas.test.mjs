@@ -9,6 +9,7 @@ import {
   probeCanvas,
   parseTodo,
   parseCourses,
+  fetchMissingIds,
   sortTasks,
   formatDue
 } from './canvas.js';
@@ -185,6 +186,105 @@ test('parseTodo ignores junk and drops exact duplicates', () => {
   const rows = parseTodo([...todoPayload, todoPayload[0]]);
   assert.equal(rows.length, 3);
   assert.deepEqual(parseTodo({ not: 'a list' }), []);
+});
+
+const jsonResponse = body =>
+  new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+
+test('fetchMissingIds asks Canvas for past-due assignments without a submission', async () => {
+  let seenUrl;
+  const ids = await fetchMissingIds('https://s.canvas', {
+    token: 't',
+    fetchImpl: async url => {
+      seenUrl = String(url);
+      return jsonResponse([{ id: 5 }, { id: 9 }, null, 'junk']);
+    }
+  });
+  assert.ok(seenUrl.includes('/api/v1/users/self/missing_submissions'));
+  assert.ok(seenUrl.includes('per_page=100'));
+  assert.deepEqual([...ids], [5, 9]);
+});
+
+test('fetchMissingIds fails open instead of guessing', async () => {
+  // A failed request means "unknown", never an empty list.
+  assert.equal(
+    await fetchMissingIds('https://s.canvas', { fetchImpl: async () => { throw new Error('down'); } }),
+    null
+  );
+  assert.equal(
+    await fetchMissingIds('https://s.canvas', { fetchImpl: async () => new Response('nope', { status: 500 }) }),
+    null
+  );
+  assert.equal(
+    await fetchMissingIds('https://s.canvas', { fetchImpl: async () => jsonResponse({ not: 'a list' }) }),
+    null
+  );
+  // A full page may be truncated — also unknown.
+  const full = Array.from({ length: 100 }, (_, index) => ({ id: index }));
+  assert.equal(await fetchMissingIds('https://s.canvas', { fetchImpl: async () => jsonResponse(full) }), null);
+});
+
+test('parseTodo hides overdue items that already have a submission', () => {
+  const now = new Date('2026-10-03T12:00:00Z').getTime();
+  const past = '2026-09-08T23:59:00Z';
+  const future = '2026-12-01T23:59:00Z';
+  const item = (id, name, due_at, extra = {}) => ({
+    type: 'submitting',
+    assignment: { id, name, due_at },
+    html_url: `https://s.canvas/courses/10/assignments/${id}`,
+    course_id: 10,
+    ...extra
+  });
+  const payload = [
+    item(1, 'Graded on paper', past), // has a submission → hide
+    item(2, 'Still missing', past), // in the missing list → keep
+    item(3, 'Due later', future), // not past due yet → keep
+    item(4, 'Also has a submission', past),
+    { ...item(4, 'Needs grading', past), type: 'grading' }, // grading items are untouched
+    { // no assignment id → we cannot tell → keep
+      type: 'submitting',
+      discussion_topic: { id: 8, name: 'Discussion post', due_at: past },
+      html_url: 'https://s.canvas/courses/10/discussion_topics/8',
+      course_id: 10
+    }
+  ];
+
+  const titles = options => parseTodo(payload, [], { now, ...options }).map(row => row.title);
+  // Without the missing list nothing changes.
+  assert.deepEqual(titles({}), [
+    'Graded on paper', 'Still missing', 'Due later',
+    'Also has a submission', 'Needs grading', 'Discussion post'
+  ]);
+  // With it, only overdue items that still lack a submission survive.
+  assert.deepEqual(titles({ missing: new Set([2]) }), [
+    'Still missing', 'Due later', 'Needs grading', 'Discussion post'
+  ]);
+  // An empty missing list means every overdue assignment has a submission.
+  assert.deepEqual(titles({ missing: new Set() }), [
+    'Due later', 'Needs grading', 'Discussion post'
+  ]);
+});
+
+test('parseTodo matches quizzes by their assignment id when hiding graded work', () => {
+  const now = new Date('2026-10-03T12:00:00Z').getTime();
+  const rows = parseTodo([
+    {
+      type: 'submitting',
+      quiz: { id: 7, assignment_id: 70, name: 'Unit quiz', due_at: '2026-09-01T23:59:00Z' },
+      html_url: 'https://s.canvas/courses/10/quizzes/7',
+      course_id: 10
+    }
+  ], [], { now, missing: new Set() });
+  assert.deepEqual(rows, []);
+  const stillMissing = parseTodo([
+    {
+      type: 'submitting',
+      quiz: { id: 7, assignment_id: 70, name: 'Unit quiz', due_at: '2026-09-01T23:59:00Z' },
+      html_url: 'https://s.canvas/courses/10/quizzes/7',
+      course_id: 10
+    }
+  ], [], { now, missing: new Set([70]) });
+  assert.equal(stillMissing.length, 1);
 });
 
 test('sortTasks orders by due date with undated items last', () => {

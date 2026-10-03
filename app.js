@@ -6,6 +6,7 @@ import {
   normalizeToken,
   buildUrl,
   fetchJson,
+  fetchMissingIds,
   probeCanvas,
   parseTodo,
   parseCourses,
@@ -238,7 +239,15 @@ async function refresh() {
       }
       throw lastError || plain('Canvas did not return a to-do list.');
     }
-    tasks = sortTasks(parseTodo(payload, parseCourses(courses)));
+    // Overdue doesn't mean undone: homework handed in on paper (and graded)
+    // still shows in Canvas's to-do payload. Ask which past-due assignments
+    // have no submission at all and drop the rest. Best-effort: if this call
+    // fails we keep the list exactly as Canvas gave it.
+    const missing = payload.length
+      ? await fetchMissingIds(base, { token: settings.token, relay, signal })
+      : null;
+    if (id !== generation) return;
+    tasks = sortTasks(parseTodo(payload, parseCourses(courses), { missing }));
     notice = '';
     loadedAt = Date.now();
   } catch (error) {
