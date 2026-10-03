@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Canvas to-do · A Hilltoppers topping</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2351755e'/><path d='M9 17l5 5 9-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+<main data-topping-content>
+  <header class="standalone-header">
+    <span class="eyebrow">A HILLTOPPERS TOPPING</span>
+    <h1>Canvas to-do</h1>
+    <p class="lede">Your Canvas to-do list, live — in this page and in the Hilltoppers popup.</p>
+  </header>
+
+  <section class="panel" id="panel" aria-label="Canvas to-do" hidden>
+    <div class="panel-head">
+      <h2>To-do</h2>
+      <span class="count" id="count" hidden>0</span>
+      <span class="updated" id="updated"></span>
+      <button class="icon-btn" id="refresh" type="button" title="Refresh" aria-label="Refresh to-do list">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true" focusable="false">
+          <path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="settings-btn" type="button" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <p class="notice" id="notice" role="status" hidden></p>
+    <ul class="tasks" id="tasks"></ul>
+    <p class="empty" id="empty" hidden>
+      <strong>Nothing due right now.</strong>
+      <span>Your Canvas to-do list is empty.</span>
+    </p>
+  </section>
+
+  <section class="setup" id="setup" aria-label="Connect Canvas" hidden>
+    <h2>Connect Canvas</h2>
+    <ol class="steps">
+      <li>In Canvas, open <strong>Account → Settings → Access Tokens → + New Token</strong> and copy it.</li>
+      <li>Enter your Canvas address and the token below.</li>
+      <li>Canvas blocks calls made straight from websites, so deploy the relay once (README, step 2) and enter its address too.</li>
+    </ol>
+    <form id="setup-form" novalidate>
+      <label for="canvas-url">Canvas site</label>
+      <input id="canvas-url" name="canvas-url" type="url" inputmode="url" placeholder="https://school.instructure.com" autocomplete="off" spellcheck="false" required>
+
+      <label for="token">Access token</label>
+      <input id="token" name="token" type="password" placeholder="Canvas access token" autocomplete="off" required>
+
+      <label for="relay">Relay address</label>
+      <input id="relay" name="relay" type="url" inputmode="url" placeholder="https://hilltoppers-tasks-relay.example.workers.dev" autocomplete="off" spellcheck="false">
+
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+
+      <div class="setup-actions">
+        <button type="submit" class="primary">Save &amp; load</button>
+        <button type="button" class="ghost" id="setup-cancel" hidden>Cancel</button>
+        <button type="button" class="ghost danger" id="forget" hidden>Forget settings</button>
+      </div>
+      <p class="fineprint">Saved only in this browser. Your token is sent only to your Canvas site and to your relay — nowhere else.</p>
+    </form>
+  </section>
+
+  <footer class="standalone-footer" id="footer">
+    <a href="https://github.com/amos-donn/hilltoppers-tasks">Source &amp; setup guide</a>
+    <span>· A Hilltoppers topping</span>
+  </footer>
+</main>
+<script src="resize.js" defer></script>
+</body>
+</html>

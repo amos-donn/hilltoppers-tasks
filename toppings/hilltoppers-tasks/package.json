@@ -1,0 +1,11 @@
+{
+  "name": "hilltoppers-tasks",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Canvas to-do — a Hilltoppers topping that shows your live Canvas to-do list.",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 4173"
+  }
+}
