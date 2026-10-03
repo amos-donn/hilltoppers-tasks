@@ -1,192 +1,106 @@
-<p align="center">
-  <img width="120" alt="Hilltoppers icon" src="https://github.com/user-attachments/assets/822f14b5-181b-462f-b9ee-59c1f28534a9" />
-</p>
+# Canvas to-do · a Hilltoppers topping
 
-<h1 align="center">
-  Hilltoppers
-  <br>
-  <sub><sup>Started by Yaoyu (Daniel) Zhang, Class of 2027. What comes next is up to you.</sup></sub>
-  <br>
-  <sub><sup>Growing since April 2025.</sup></sub>
-  <br><br><br>
-</h1>
+Your live Canvas to-do list — the assignments and quizzes Canvas says you need
+to submit — in one quiet list. It works as a plain webpage and as a **Topping**
+inside the Hilltoppers Chrome extension (the modules you add from the Topping
+Bar).
 
-Today's schedule, today's day color, and a timer to the end of the block — for
-students at Saint Johnsbury Academy. An iOS app and a Chrome extension, built
-by a student, open to anyone at SJA who wants to help.
+Live site: https://amos-donn.github.io/hilltoppers-tasks/
 
-[**Get it on the App Store**](https://apps.apple.com/us/app/hilltoppers/id6749836752) ·
-[**Add to Chrome**](https://chromewebstore.google.com/detail/bcjpcmlikbccobbpheojlnmiaffilnaa)
-
-## What it does
-
-**Schedule** — the real one for today, including the irregular days (ABDEC,
-Spirit Week, late starts, exam weeks). Put in your course names and it shows
-them instead of "A Block".
-
-**Day color** — Green or White, without opening the school website.
-
-**Block timer** — how long until this block ends, in the iOS widget and the
-Chrome toolbar icon.
-
-**Menu** — what's in the dining hall today (extension).
-
-## Have an idea?
-
-Open an [issue](https://github.com/daniezl/Hilltoppers/issues/new) and
-describe it the way you would explain it to a friend — no technical language
-needed. Ideas that other students want get the `enhancement` label.
-
-Or use Suggestions in the extension, which needs no GitHub account.
-
-## Want to help build it?
-
-You do not need to understand all of it. Each folder is one piece, and most
-changes touch only one.
-
-| Folder | What it is | Written in | Start here |
-|---|---|---|---|
-| [`ios/`](./ios) | The iPhone app and its home-screen widget | Swift, SwiftUI | Open `ios/SJA_re.xcodeproj` in Xcode |
-| [`chrome-extension/`](./chrome-extension) | The Chrome extension | TypeScript, React | `cd chrome-extension && npm install && npm run dev` |
-| [`worker/`](./worker) | Toppings, public suggestions, and account email APIs | TypeScript, Cloudflare Workers | See [`worker/README.md`](./worker/README.md) |
-| [`data/`](./data) | Special days, breaks, the menu — the JSON both apps download | JSON | Edit `data/public/special_days.json`; format in [`DATA_FORMAT.md`](./data/DATA_FORMAT.md) |
-
-The most common change is a schedule fix: a special day was missed or has the
-wrong times. That is one JSON file, no code, and it is live about a minute after
-merging — both apps pick it up the next time they refresh. [`data/README.md`](./data/README.md) explains how.
-
-Anything that needs Firebase or Cloudflare credentials is described in
-[`SETUP.md`](./SETUP.md).
-
-### How the pieces fit
+## How it works
 
 ```
-  data/public/*.json ──► Cloudflare Pages ──► iOS app
-  (edited by hand,          (static CDN)   └─► Chrome extension
-   or by GitHub Actions)
-
-  school website ──► data/scripts/fetch_day_type.mjs ──► day_type.json
-  (Daily Bulletin)   (GitHub Action, every 30 min)       (Green/White per day;
-                                                          apps not reading it yet)
+  your browser ──► GitHub Pages (this site: index.html, app.js, canvas.js)
+       │
+       ├── Canvas access token (yours, typed into Settings once)
+       │
+       └──► relay Worker (this repo, relay/) ──► your Canvas /api/v1/ URLs
 ```
 
-The schedule never touches a server: it is static JSON that both apps read
-directly. Separate Workers handle Toppings, public suggestions, and account
-email. Firebase handles sign-in and preference sync; private feedback lands
-in Firestore.
+Canvas sends no CORS headers, so a browser cannot read Canvas API responses
+directly — the request is blocked before any data comes back. The relay is a
+tiny Cloudflare Worker that forwards your GET to Canvas and hands the JSON back
+with the missing CORS headers. It stores nothing, forwards only `GET`/`HEAD` to
+`https://…/api/v1/…` paths, passes through only your `Authorization` header
+(no cookies), and never logs your token.
 
-### Working on it
+## Setup
 
-- One branch per change, named for what it does. Merged branches are deleted
-  automatically.
-- Deploys are manual and separate from merging: the iOS app ships through
-  Xcode, the extension through the Chrome Web Store. Only `data/` deploys
-  itself, on every merge to `main`.
-- A [GitHub Action](./.github/workflows) refreshes the dining menu every 30
-  minutes and opens a pull request when the school calendar changes.
+### 1. GitHub Pages (already on for this repo)
 
-<details>
-<summary>Installing the extension manually from a release</summary>
+The site is served from the `main` branch at the root. If it ever gets turned
+off: **Settings → Pages → Source: Deploy from a branch → `main` / root**.
 
-If you would rather not use the Chrome Web Store:
+### 2. Deploy the relay (once)
 
-1. Download `dist.zip` from the [latest release](https://github.com/daniezl/Hilltoppers/releases/latest) and unzip it.
-2. Open `chrome://extensions` and turn on **Developer mode** (top right).
-3. Click **Load unpacked** and pick the unzipped `dist` folder.
-4. Click the puzzle icon in the toolbar and pin Hilltoppers.
-
-To update, load the new `dist` folder the same way.
-
-</details>
-
-## License
-
-*(to be chosen — see the note in the pull request)*
-
-## Ask SJA: the first independently hosted topping
-
-`chrome-extension/` embeds a URL and provides a fixed-size collapsible container.
-`toppings/ask-sja/` is independently deployable: its own static webpage, Worker
-API, corpus, rate limiters and DeepSeek secret. It has no imports or authentication
-dependency on the extension or the existing schedule-admin Worker. The public
-calendar and day-colour feed URLs can be changed in `wrangler.toml`.
-
-Live site: https://ask-sja-topping.danielzhang089.workers.dev/.
-Browsers contact that site only; its server calls DeepSeek. Test this domain on
-the school network rather than assuming a DeepSeek website block applies to it.
+Needs a free [Cloudflare](https://dash.cloudflare.com) account.
 
 ```sh
-cd toppings/ask-sja
-npm ci
-npm run typecheck
-npm test
-npm run refresh:corpus
-npm run build
+cd relay
+npm install
+npx wrangler login
 npm run deploy
-npx wrangler secret put DEEPSEEK_API_KEY
 ```
 
-The secret belongs to this independent Worker. Enter it at Wrangler's prompt,
-never in frontend code or Git. `DEEPSEEK_MODEL` is configurable; the default is
-`deepseek-flash`. Without a secret the API returns 503, never a fabricated answer.
-`npm run dev` serves http://localhost:8790; local secrets go in ignored `.dev.vars`.
-`DEEPSEEK_URL` is a local-test override, not set in the production configuration.
+Wrangler prints an address like
+`https://hilltoppers-tasks-relay.<your-account>.workers.dev`. Copy it — you
+will paste it into the page in step 4.
 
-### Conversation and sources
+### 3. Make a Canvas access token (once per token)
 
-The webpage keeps up to 20 turns in memory while it is open. Closing and reopening
-the popup starts a fresh conversation and clears the draft; no chat is restored
-from browser storage. Reloading the standalone webpage also starts fresh. Each request sends
-only the last three completed turns (six alternating user/assistant messages) plus
-the new question. No client-supplied system roles are accepted. User messages are
-limited to 500 characters; previous assistant answers to 3,000 characters each;
-request bodies to 48 KiB. Old citation numbers are removed from history before it
-reaches the model. Both search-query rewriting and answer generation receive the
-context. The answer must still be grounded in freshly retrieved passages, not in
-previous assistant claims. Backend logs contain retrieval metrics, not questions.
+1. Sign in to Canvas.
+2. **Account (top-left) → Settings → Access Tokens → + New Token**.
+3. Give it a name (e.g. "Hilltoppers to-do"), set an expiry you are comfortable
+   with, create it, and copy the value **now** — Canvas only shows it once.
 
-Sources are collapsed under each answer, de-duplicated by document/date, while
-inline citation numbers remain linked. Bulletin labels display one publication
-date as `Daily Bulletin · Sep 16`; date-only fields are not timezone-converted.
-Enter sends, Shift+Enter adds a line and IME composition does not send. Leaving
-the page clears context and aborts the in-flight browser request. There is no
-manual reset button. Within the same open popup, follow-up questions retain context.
+### 4. Connect the page
 
-### Data and independent publishing
+Open the [live site](https://amos-donn.github.io/hilltoppers-tasks/), fill in:
 
-The corpus fetcher and retrieval code originate in PR #34. Sources and archives
-live inside the topping project. The **Update Ask SJA sources** Action runs every 30 minutes and can also be run manually.
-It archives bulletins/newsletters and publishes `data/public/ask-sja-corpus.json`
-through the existing Cloudflare Pages data site. Ask SJA reads that feed using
-`CORPUS_URL`, refreshing its index every 15 minutes (the feed may also be cached
-for five minutes). Failed page/PDF fetches keep the previous content. If the
-feed is unavailable, Ask SJA keeps its last index or uses its bundled snapshot.
-Deploy the Worker once after switching to this feed; later source updates do not
-require Worker or extension deployments. `npm run refresh:corpus` updates both
-the public feed and bundled fallback. Fixed PDF links remain configured in
-`corpus_sources.json`; new editions need their links updated there. Newsletters
-not listed by the school can be added to its `newsletters` list. Model requests are limited to 20/minute per network IP and
-60/minute on a shared key; Cloudflare's location-local counters are not a hard
-global spending cap. School users can share the same network IP.
+- **Canvas site** — your school's Canvas address, e.g. `https://school.instructure.com`
+- **Access token** — from step 3
+- **Relay address** — from step 2
 
-Publish changes with `npm run deploy` in `toppings/ask-sja`, then reload the topping
-from its **⋯** menu. The extension does not need rebuilding for webpage/backend
-changes. Host layout changes do require rebuilding the extension.
+Press **Save & load**. Settings stay in this browser only (localStorage); they
+are never written into the repository.
 
-Validation includes 21 Worker/retrieval tests, six document-parser tests,
-TypeScript and extension builds, plus browser checks for multi-turn payloads,
-IME/Enter handling, stable panel height, pinned composer, scrolling, source dates,
-source expansion, history restore, retry, new chat and the host options menu.
-Browser fixtures verify UI behavior separately from live model answers.
+## Using it as a Hilltoppers topping
 
+Open the extension popup → **Topping Bar** → publish or preview with this
+site's URL. Suggested listing values: icon **checklist**, height mode
+**Fit content** (the page includes `resize.js` and wraps everything in
+`[data-topping-content]`, so it sizes to its content inside the popup).
 
-## Topping Bar
+Each person who adds the topping enters their own Canvas address, token and
+relay in the topping's Settings — one deploy serves everyone.
 
-The extension's **Topping Bar** link opens a catalog of independently hosted
-modules. Preview cards show community ratings and unique browser installations
-as Users; sorting defaults to most users. Publishing requires a verified SJA
-student or staff email and a public author name. The store lives in
-`chrome-extension/src/toppings/`; its independent Cloudflare Worker and D1
-configuration are in `worker/wrangler.toppings.toml`. See `worker/README.md` for
-deployment and report moderation. Creation instructions and starter templates
-are intentionally deferred.
+## Layout
+
+| File | What it is |
+|---|---|
+| `index.html`, `style.css` | The page and its quiet, compact styling (built for the popup's ~318px iframe and for full-width in a tab) |
+| `canvas.js` | Pure Canvas logic: URL building, fetching, parsing `/users/self/todo_items`, sorting, due-date wording |
+| `app.js` | Page wiring: settings, refresh cycle, rendering, the extension's topping bridge |
+| `resize.js` | Copied verbatim from `toppings/shared/resize.js` in the Hilltoppers repo; reports content height to the extension |
+| `relay/` | The Cloudflare Worker CORS relay plus its tests |
+
+## Development
+
+```sh
+npm test        # node --test: canvas.js + relay suites
+npm run serve   # http://localhost:4173
+cd relay && npm test
+```
+
+There is no build step: the site is plain HTML/CSS/ES modules, which is what
+GitHub Pages serves.
+
+## Privacy
+
+- Your token is stored in this browser and sent only to your Canvas site and
+  to the relay you deployed.
+- The relay keeps no state, sets no cookies, and accepts only GET/HEAD to
+  Canvas `/api/v1/` paths.
+- The list you see comes straight from Canvas's own to-do endpoint
+  (`/api/v1/users/self/todo`, with `/todo_items` as a fallback for older
+  Canvas installs); nothing is cached on a server.

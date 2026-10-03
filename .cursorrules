@@ -1,4 +1,0 @@
-Read `AGENTS.md` at the repository root before making changes. It has the
-project boundary, the folder map, the build and version-bump rules, and how to
-write a pull request for a non-programmer. Everything that used to be in this
-file lives there now.
