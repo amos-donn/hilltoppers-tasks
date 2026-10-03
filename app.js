@@ -7,6 +7,7 @@ import {
   buildUrl,
   fetchJson,
   fetchMissingIds,
+  fetchGradedIds,
   probeCanvas,
   parseTodo,
   parseCourses,
@@ -36,6 +37,12 @@ const REFRESH_INTERVAL = 5 * 60_000;
 // Current Canvas documents /users/self/todo (it answers 401 without a token);
 // /todo_items 404s there but older school installs may still use it, so try both.
 const TODO_PATHS = ['/api/v1/users/self/todo', '/api/v1/users/self/todo_items'];
+// One school and one relay are baked into this deployment — the only thing
+// anyone ever sets is their own Canvas access token.
+const CANVAS_URL = 'https://stjacademy.instructure.com';
+const RELAY_URL = 'https://hilltoppers-tasks.amos-donn.workers.dev';
+const BASE = normalizeBaseUrl(CANVAS_URL);
+const RELAY = normalizeBaseUrl(RELAY_URL);
 
 let settings = readSettings();
 let tasks = [];
@@ -51,14 +58,12 @@ function readSettings() {
     const raw = localStorage.getItem(SETTINGS_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     return {
-      canvas: typeof parsed.canvas === 'string' ? parsed.canvas : '',
-      token: typeof parsed.token === 'string' ? parsed.token : '',
-      relay: typeof parsed.relay === 'string' ? parsed.relay : ''
+      token: typeof parsed.token === 'string' ? parsed.token : ''
     };
   } catch {
     // Storage can be unavailable inside an embedded topping; settings then
     // live only for this page view.
-    return { canvas: '', token: '', relay: '' };
+    return { token: '' };
   }
 }
 
@@ -71,7 +76,7 @@ function writeSettings() {
   }
 }
 
-const configured = () => Boolean(settings.canvas && settings.token);
+const configured = () => Boolean(settings.token);
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -143,22 +148,19 @@ function explain(error) {
     return `Canvas said 403: this request was refused.${suffix}`;
   }
   if (status === 400) {
-    return `The relay said 400. Check that the relay address is the one from your own deploy.${suffix}`;
+    return `The relay said 400. Make sure your relay deploy is current (relay/ in the repo).${suffix}`;
   }
   if (status === 404) {
-    return `Canvas said 404: no to-do endpoint answered there. Check the Canvas site address in Settings.${suffix}`;
+    return `Canvas said 404: no to-do endpoint answered there.${suffix}`;
   }
   if (status === 502) {
-    return `The relay could not reach that Canvas address. Check the Canvas site address in Settings.${suffix}`;
+    return `The relay could not reach Canvas. Try again in a moment.${suffix}`;
   }
   if (status >= 500) {
     return `Canvas had a problem on its side (HTTP ${status}). Try again in a moment.${suffix}`;
   }
   if (error && error.name === 'AbortError') return 'Canvas took too long to answer. Try again.';
-  if (!settings.relay) {
-    return 'Canvas blocks calls made straight from websites, so the relay is needed. Deploy it once (README, step 2) and paste its address in Settings.';
-  }
-  return 'Could not reach Canvas. Check your connection and the relay address, then try again.';
+  return 'Could not reach Canvas. Check your connection, then try again.';
 }
 
 function plain(message) {
@@ -169,18 +171,6 @@ function plain(message) {
 
 async function refresh() {
   if (!configured()) return;
-  const base = normalizeBaseUrl(settings.canvas);
-  if (!base) {
-    notice = 'Enter a Canvas address like https://school.instructure.com in Settings.';
-    render();
-    return;
-  }
-  const relay = settings.relay ? normalizeBaseUrl(settings.relay) : '';
-  if (settings.relay && !relay) {
-    notice = 'The relay address does not look like a web address. Check it in Settings.';
-    render();
-    return;
-  }
 
   const id = ++generation;
   controller?.abort();
@@ -192,24 +182,24 @@ async function refresh() {
 
   try {
     const courses = await fetchJson(
-      buildUrl(base, '/api/v1/users/self/courses', { per_page: '100' }),
-      { token: settings.token, relay, signal }
+      buildUrl(BASE, '/api/v1/users/self/courses', { per_page: '100' }),
+      { token: settings.token, relay: RELAY, signal }
     ).catch(() => []);
     if (id !== generation) return;
     let payload = null;
     let lastError = null;
     for (const path of TODO_PATHS) {
       try {
-        const data = await fetchJson(buildUrl(base, path, { per_page: '50' }), {
+        const data = await fetchJson(buildUrl(BASE, path, { per_page: '50' }), {
           token: settings.token,
-          relay,
+          relay: RELAY,
           signal
         });
         if (Array.isArray(data)) {
           payload = data;
           break;
         }
-        lastError = plain('Canvas did not return a to-do list — double-check the Canvas site address in Settings.');
+        lastError = plain('Canvas did not return a to-do list.');
       } catch (error) {
         // Only a missing endpoint is worth trying on the next path; a 403
         // fails identically everywhere, so stop and let the probe below
@@ -227,11 +217,11 @@ async function refresh() {
       // Every to-do path failed with an HTML error page. A real Canvas never
       // does that (it answers 401 + JSON without a token), so ask the host
       // what it actually is.
-      if (lastError && (lastError.status === 404 || lastError.status === 403) && relay) {
-        const verdict = await probeCanvas(base, { relay, signal });
+      if (lastError && (lastError.status === 404 || lastError.status === 403)) {
+        const verdict = await probeCanvas(BASE, { relay: RELAY, signal });
         if (id !== generation) return;
         if (verdict === 'not-canvas') {
-          throw plain('That address does not answer like a Canvas site. In Settings, paste the address you actually log into Canvas with — usually https://school.instructure.com — with nothing after the domain (no /courses/…). If your school hosts Canvas under a path like school.edu/canvas, keep that path.');
+          throw plain(`${CANVAS_URL} did not answer like a Canvas site. Reload to try again; if this page should point at a different school, its baked-in Canvas address needs updating.`);
         }
         if (verdict === 'blocked') {
           throw plain('A firewall in front of that Canvas refused this request (403) — usually a CDN or security layer blocking non-browser traffic. Reload and try again; if it still fails, ask whoever administers your school Canvas to allow API requests.');
@@ -244,10 +234,18 @@ async function refresh() {
     // have no submission at all and drop the rest. Best-effort: if this call
     // fails we keep the list exactly as Canvas gave it.
     const missing = payload.length
-      ? await fetchMissingIds(base, { token: settings.token, relay, signal })
+      ? await fetchMissingIds(BASE, { token: settings.token, relay: RELAY, signal })
       : null;
     if (id !== generation) return;
-    tasks = sortTasks(parseTodo(payload, parseCourses(courses), { missing }));
+    const rows = parseTodo(payload, parseCourses(courses), { missing });
+    // A grade ends the story: anything Canvas has already graded is hidden —
+    // even paper homework it still calls unsubmitted and overdue. Best-effort:
+    // if a course will not answer, its rows stay visible as before.
+    const graded = rows.length
+      ? await fetchGradedIds(BASE, rows, { token: settings.token, relay: RELAY, signal })
+      : new Set();
+    if (id !== generation) return;
+    tasks = sortTasks(rows.filter(row => !graded.has(row.assignmentId)));
     notice = '';
     loadedAt = Date.now();
   } catch (error) {
@@ -265,9 +263,7 @@ async function refresh() {
 
 function openSetup() {
   setupOpen = true;
-  $('#canvas-url').value = settings.canvas;
   $('#token').value = settings.token;
-  $('#relay').value = settings.relay;
   $('#form-error').hidden = true;
   render();
 }
@@ -280,7 +276,7 @@ $('#setup-cancel').addEventListener('click', () => {
 });
 
 $('#forget').addEventListener('click', () => {
-  settings = { canvas: '', token: '', relay: '' };
+  settings = { token: '' };
   tasks = [];
   loadedAt = 0;
   notice = '';
@@ -296,26 +292,13 @@ $('#forget').addEventListener('click', () => {
 $('#setup-form').addEventListener('submit', event => {
   event.preventDefault();
   const errorNode = $('#form-error');
-  const canvas = normalizeBaseUrl($('#canvas-url').value);
-  if (!canvas) {
-    errorNode.textContent = 'Enter a Canvas address like https://school.instructure.com';
-    errorNode.hidden = false;
-    return;
-  }
   const token = normalizeToken($('#token').value);
   if (!token) {
     errorNode.textContent = 'Paste the access token from Canvas.';
     errorNode.hidden = false;
     return;
   }
-  const rawRelay = $('#relay').value.trim();
-  const relay = rawRelay ? normalizeBaseUrl(rawRelay) : '';
-  if (rawRelay && !relay) {
-    errorNode.textContent = 'The relay address must be a full https address.';
-    errorNode.hidden = false;
-    return;
-  }
-  settings = { canvas, token, relay };
+  settings = { token };
   const kept = writeSettings();
   setupOpen = false;
   notice = kept ? '' : 'This browser will not keep your settings after the page closes.';

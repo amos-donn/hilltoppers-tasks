@@ -46,18 +46,11 @@
     <h2>Connect Canvas</h2>
     <ol class="steps">
       <li>In Canvas, open <strong>Account → Settings → Access Tokens → + New Token</strong> and copy it.</li>
-      <li>Enter your Canvas address and the token below.</li>
-      <li>Canvas blocks calls made straight from websites, so deploy the relay once (README, step 2) and enter its address too.</li>
+      <li>Paste the token below — this page already knows your school's Canvas address and its relay.</li>
     </ol>
     <form id="setup-form" novalidate>
-      <label for="canvas-url">Canvas site</label>
-      <input id="canvas-url" name="canvas-url" type="url" inputmode="url" placeholder="https://school.instructure.com" autocomplete="off" spellcheck="false" required>
-
       <label for="token">Access token</label>
       <input id="token" name="token" type="password" placeholder="Canvas access token" autocomplete="off" required>
-
-      <label for="relay">Relay address</label>
-      <input id="relay" name="relay" type="url" inputmode="url" placeholder="https://hilltoppers-tasks-relay.example.workers.dev" autocomplete="off" spellcheck="false">
 
       <p class="form-error" id="form-error" role="alert" hidden></p>
 

@@ -211,6 +211,47 @@ export async function fetchMissingIds(base, { token, relay, signal, fetchImpl = 
   return ids.size >= 100 ? null : ids;
 }
 
+// A grade ends the story: the to-do payload never carries one, so ask Canvas
+// for the calling user's submissions for exactly the assignments still on
+// the list — one request per course. Returns the set of assignment ids that
+// carry a grade: graded state, excused, or any recorded score/grade — paper
+// homework the teacher has graded counts even when Canvas still calls the
+// submission unsubmitted and overdue. A course that fails to answer simply
+// contributes nothing: its rows stay visible.
+export async function fetchGradedIds(base, rows, { token, relay, signal, fetchImpl = fetch } = {}) {
+  const byCourse = new Map();
+  for (const row of rows) {
+    if (!Number.isFinite(row?.courseId) || !Number.isFinite(row?.assignmentId)) continue;
+    if (!byCourse.has(row.courseId)) byCourse.set(row.courseId, new Set());
+    byCourse.get(row.courseId).add(row.assignmentId);
+  }
+  const graded = new Set();
+  for (const [courseId, ids] of byCourse) {
+    const url = new URL(buildUrl(base, `/api/v1/courses/${courseId}/students/submissions`, { per_page: 100 }));
+    for (const id of ids) url.searchParams.append('assignment_ids[]', String(id));
+    let payload;
+    try {
+      payload = await fetchJson(url.href, { token, relay, signal, fetchImpl });
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(payload)) continue;
+    for (const submission of payload) {
+      if (!submission || typeof submission !== 'object' || !hasGrade(submission)) continue;
+      const id = Number(submission.assignment_id);
+      if (Number.isFinite(id)) graded.add(id);
+    }
+  }
+  return graded;
+}
+
+function hasGrade(submission) {
+  if (submission.excused === true) return true;
+  if (submission.workflow_state === 'graded') return true;
+  if (typeof submission.grade === 'string' && submission.grade.trim() !== '') return true;
+  return submission.score != null;
+}
+
 // Turns the /users/self/todo_items payload into flat display rows.
 // `missing` is the Set from fetchMissingIds: overdue "submitting" items
 // outside it already have a submission and are dropped.
@@ -249,7 +290,11 @@ export function parseTodo(payload, courses, { missing = null, now = Date.now() }
       url,
       dueAt,
       kind: kindFor(entry, resource),
-      course: Number.isFinite(courseId) ? names.get(courseId) ?? null : null
+      course: Number.isFinite(courseId) ? names.get(courseId) ?? null : null,
+      // Kept on the row so callers can ask Canvas about this exact item
+      // (submission state, grades) without re-parsing the payload.
+      courseId: Number.isFinite(courseId) ? courseId : NaN,
+      assignmentId
     });
   }
   return rows;
