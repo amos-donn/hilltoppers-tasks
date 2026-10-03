@@ -10,6 +10,7 @@ import {
   parseTodo,
   parseCourses,
   fetchMissingIds,
+  fetchGradedIds,
   sortTasks,
   formatDue
 } from './canvas.js';
@@ -148,7 +149,7 @@ const todoPayload = [
   },
   {
     type: 'submitting',
-    quiz: { id: 2, name: 'Unit quiz', due_at: '2026-10-06T12:00:00Z' },
+    quiz: { id: 2, assignment_id: 20, name: 'Unit quiz', due_at: '2026-10-06T12:00:00Z' },
     html_url: 'https://s.canvas/courses/2/quizzes/2',
     course_id: 20
   },
@@ -180,6 +181,10 @@ test('parseTodo flattens assignments, quizzes and grading items', () => {
   assert.equal(rows[2].kind, 'Grade · 3');
   assert.equal(rows[2].dueAt, null);
   assert.equal(rows[2].course, null);
+  // Rows carry their ids so callers can ask Canvas about each item.
+  assert.equal(rows[0].courseId, 10);
+  assert.equal(rows[0].assignmentId, 1);
+  assert.equal(rows[1].assignmentId, 20);
 });
 
 test('parseTodo ignores junk and drops exact duplicates', () => {
@@ -285,6 +290,64 @@ test('parseTodo matches quizzes by their assignment id when hiding graded work',
     }
   ], [], { now, missing: new Set([70]) });
   assert.equal(stillMissing.length, 1);
+});
+
+test('fetchGradedIds hides anything carrying a grade, one request per course', async () => {
+  const requests = [];
+  const fetchImpl = async url => {
+    const href = String(url);
+    requests.push(href);
+    if (href.includes('/courses/10/')) {
+      return jsonResponse([
+        { assignment_id: 1, workflow_state: 'graded', grade: 'B', score: 12 },
+        { assignment_id: 2, workflow_state: 'unsubmitted', grade: null, score: null },
+        { assignment_id: 5, workflow_state: 'unsubmitted', grade: '0', score: 0 }
+      ]);
+    }
+    return jsonResponse([
+      { assignment_id: 3, workflow_state: 'unsubmitted', excused: true, grade: null, score: null }
+    ]);
+  };
+  const graded = await fetchGradedIds('https://s.canvas', [
+    { courseId: 10, assignmentId: 1 },
+    { courseId: 10, assignmentId: 2 },
+    { courseId: 10, assignmentId: 5 },
+    { courseId: 20, assignmentId: 3 },
+    { courseId: NaN, assignmentId: 4 }, // no course → not checkable
+    { courseId: 10, assignmentId: NaN } // no assignment → not checkable
+  ], { token: 't', fetchImpl });
+
+  assert.deepEqual([...graded].sort(), [1, 3, 5]);
+  // One grouped request per course, asking only about the listed items.
+  assert.equal(requests.length, 2);
+  const courseTen = new URL(requests.find(href => href.includes('/courses/10/')));
+  assert.equal(courseTen.pathname, '/api/v1/courses/10/students/submissions');
+  assert.deepEqual(courseTen.searchParams.getAll('assignment_ids[]'), ['1', '2', '5']);
+  assert.ok(requests.some(href => href.includes('/courses/20/students/submissions')));
+});
+
+test('fetchGradedIds fails open when a course cannot answer', async () => {
+  const fetchImpl = async url => {
+    if (String(url).includes('/courses/10/')) throw new Error('down');
+    return jsonResponse([{ assignment_id: 3, workflow_state: 'graded' }]);
+  };
+  const graded = await fetchGradedIds('https://s.canvas', [
+    { courseId: 10, assignmentId: 1 },
+    { courseId: 20, assignmentId: 3 }
+  ], { token: 't', fetchImpl });
+  // Course 10 stays unknown → its row is never hidden; course 20 is graded.
+  assert.deepEqual([...graded], [3]);
+});
+
+test('fetchGradedIds asks nothing when no row is checkable', async () => {
+  const graded = await fetchGradedIds('https://s.canvas', [
+    { courseId: NaN, assignmentId: 1 },
+    { title: 'no ids at all' }
+  ], {
+    token: 't',
+    fetchImpl: async () => { throw new Error('must not be called'); }
+  });
+  assert.deepEqual([...graded], []);
 });
 
 test('sortTasks orders by due date with undated items last', () => {

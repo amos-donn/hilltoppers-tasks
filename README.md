@@ -43,8 +43,9 @@ npm run deploy
 ```
 
 Wrangler prints an address like
-`https://hilltoppers-tasks-relay.<your-account>.workers.dev`. Copy it — you
-will paste it into the page in step 4.
+`https://hilltoppers-tasks-relay.<your-account>.workers.dev`. This deploy is
+already wired to `https://hilltoppers-tasks.amos-donn.workers.dev` — if you
+deploy your own, update `RELAY_URL` in `app.js`.
 
 ### 3. Make a Canvas access token (once per token)
 
@@ -55,14 +56,11 @@ will paste it into the page in step 4.
 
 ### 4. Connect the page
 
-Open the [live site](https://amos-donn.github.io/hilltoppers-tasks/), fill in:
-
-- **Canvas site** — your school's Canvas address, e.g. `https://school.instructure.com`
-- **Access token** — from step 3
-- **Relay address** — from step 2
-
-Press **Save & load**. Settings stay in this browser only (localStorage); they
-are never written into the repository.
+Open the [live site](https://amos-donn.github.io/hilltoppers-tasks/) and paste
+your **Access token** from step 3 — that is the only thing to fill in. The
+Canvas site (`https://stjacademy.instructure.com`) and the relay are baked into
+the page. Press **Save & load**. Settings stay in this browser only
+(localStorage); they are never written into the repository.
 
 ## Using it as a Hilltoppers topping
 
@@ -71,8 +69,8 @@ site's URL. Suggested listing values: icon **checklist**, height mode
 **Fit content** (the page includes `resize.js` and wraps everything in
 `[data-topping-content]`, so it sizes to its content inside the popup).
 
-Each person who adds the topping enters their own Canvas address, token and
-relay in the topping's Settings — one deploy serves everyone.
+Each person who adds the topping enters their own Canvas access token in the
+topping's Settings — one deploy serves everyone.
 
 ## Layout
 
@@ -97,8 +95,8 @@ GitHub Pages serves.
 
 ## Privacy
 
-- Your token is stored in this browser and sent only to your Canvas site and
-  to the relay you deployed.
+- Your token is stored in this browser and sent only to the Canvas site this
+  page is configured for and to its relay.
 - The relay keeps no state, sets no cookies, and accepts only GET/HEAD to
   Canvas `/api/v1/` paths.
 - The list you see comes straight from Canvas's own to-do endpoint
