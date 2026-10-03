@@ -6,6 +6,7 @@ import {
   normalizeToken,
   buildUrl,
   fetchJson,
+  probeCanvas,
   parseTodo,
   parseCourses,
   sortTasks,
@@ -219,7 +220,18 @@ async function refresh() {
       }
     }
     if (id !== generation) return;
-    if (!payload) throw lastError || plain('Canvas did not return a to-do list.');
+    if (!payload) {
+      // Every to-do path 404'd. A real Canvas never 404s these — it answers
+      // 401 without a token — so ask the host what it actually is.
+      if (lastError && lastError.status === 404 && relay) {
+        const verdict = await probeCanvas(base, { relay, signal });
+        if (id !== generation) return;
+        if (verdict === 'not-canvas') {
+          throw plain('That address does not answer like a Canvas site. In Settings, paste the address you actually log into Canvas with — usually https://school.instructure.com — with nothing after the domain (no /courses/…). If your school hosts Canvas under a path like school.edu/canvas, keep that path.');
+        }
+      }
+      throw lastError || plain('Canvas did not return a to-do list.');
+    }
     tasks = sortTasks(parseTodo(payload, parseCourses(courses)));
     notice = '';
     loadedAt = Date.now();

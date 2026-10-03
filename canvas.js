@@ -6,6 +6,16 @@ const KIND_BY_TYPE = {
   context_link: 'Link'
 };
 
+// Deep links people paste from the address bar (/courses/…, /login, …) must
+// be stripped to the site, but a subpath install (school.edu/canvas) must
+// survive: the API lives under it.
+const CANVAS_APP_SEGMENTS = new Set([
+  'account', 'accounts', 'admin', 'analytics', 'api', 'assignments', 'auth',
+  'calendar', 'conversations', 'course', 'courses', 'dashboard',
+  'discussion_topics', 'files', 'gradebook', 'groups', 'inbox', 'login',
+  'modules', 'pages', 'profile', 'quizzes', 'settings', 'users'
+]);
+
 export function normalizeBaseUrl(raw) {
   if (typeof raw !== 'string' || !raw.trim()) return null;
   let value = raw.trim();
@@ -22,12 +32,11 @@ export function normalizeBaseUrl(raw) {
     return null;
   }
   if (url.username || url.password) return null;
-  // The Canvas address is an origin: paste a link copied from a course page
-  // and only the site survives.
-  url.pathname = '';
-  url.search = '';
-  url.hash = '';
-  return url.href.replace(/\/+$/, '');
+  const segments = url.pathname.split('/').filter(Boolean);
+  const keepPath = segments.length && !CANVAS_APP_SEGMENTS.has(segments[0].toLowerCase())
+    ? `/${segments.join('/')}`
+    : '';
+  return `${url.origin}${keepPath}`.replace(/\/+$/, '');
 }
 
 export function buildUrl(base, path, params = {}) {
@@ -45,6 +54,27 @@ export function endpointFor(target, relay) {
 
 export function authHeaders(token) {
   return { Authorization: `Bearer ${token}`, Accept: 'application/json' };
+}
+
+// Ask the host what it is, with no token: a real Canvas answers
+// /users/self/profile with 401 + JSON, while a non-Canvas host answers 404
+// (or some page) in HTML. Only meaningful through a relay — without one the
+// browser cannot read a cross-origin response at all.
+export async function probeCanvas(base, { relay, signal, fetchImpl = fetch } = {}) {
+  const target = buildUrl(base, '/api/v1/users/self/profile', {});
+  try {
+    const response = await fetchImpl(endpointFor(target, relay), {
+      headers: { Accept: 'application/json' },
+      signal
+    });
+    const type = response.headers.get('Content-Type') || '';
+    if (!/json/i.test(type)) {
+      return response.status === 404 ? 'not-canvas' : 'unknown';
+    }
+    return 'canvas';
+  } catch {
+    return 'unknown';
+  }
 }
 
 // People paste "Bearer …", quoted values, or a token that wrapped across

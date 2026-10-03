@@ -6,6 +6,7 @@ import {
   buildUrl,
   endpointFor,
   fetchJson,
+  probeCanvas,
   parseTodo,
   parseCourses,
   sortTasks,
@@ -23,6 +24,32 @@ test('normalizeBaseUrl rejects unusable addresses', () => {
   assert.equal(normalizeBaseUrl('   '), null);
   assert.equal(normalizeBaseUrl('ftp://canvas.example.edu'), null);
   assert.equal(normalizeBaseUrl('not a url ::'), null);
+});
+
+test('normalizeBaseUrl keeps a subpath install but strips Canvas deep links', () => {
+  assert.equal(normalizeBaseUrl('https://school.edu/canvas'), 'https://school.edu/canvas');
+  assert.equal(normalizeBaseUrl('https://school.edu/canvas/'), 'https://school.edu/canvas');
+  assert.equal(normalizeBaseUrl('https://x.instructure.com/courses/5/assignments/9'), 'https://x.instructure.com');
+  assert.equal(normalizeBaseUrl('https://x.instructure.com/login?session=1'), 'https://x.instructure.com');
+});
+
+test('buildUrl puts the API under a subpath install', () => {
+  assert.equal(
+    buildUrl('https://school.edu/canvas', '/api/v1/users/self/todo', { per_page: 50 }),
+    'https://school.edu/canvas/api/v1/users/self/todo?per_page=50'
+  );
+});
+
+test('probeCanvas tells a real Canvas apart from a plain website', async () => {
+  const reply = (status, type) =>
+    async () => new Response('<page></page>', { status, headers: { 'content-type': type } });
+  const via = handler => ({ relay: 'https://relay.example', fetchImpl: handler });
+
+  assert.equal(await probeCanvas('https://canvas.example.edu', via(reply(401, 'application/json; charset=utf-8'))), 'canvas');
+  assert.equal(await probeCanvas('https://wrong.example', via(reply(404, 'text/html; charset=UTF-8'))), 'not-canvas');
+  assert.equal(await probeCanvas('https://canvas.example.edu', via(reply(404, 'application/json'))), 'canvas');
+  assert.equal(await probeCanvas('https://odd.example', via(reply(200, 'text/html'))), 'unknown');
+  assert.equal(await probeCanvas('https://x.example', via(async () => { throw new Error('net down'); })), 'unknown');
 });
 
 test('normalizeToken cleans up how people paste tokens', () => {
