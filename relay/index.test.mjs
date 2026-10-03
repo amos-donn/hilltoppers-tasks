@@ -59,7 +59,12 @@ test('forwards the Authorization header and returns Canvas JSON with CORS', asyn
   };
   try {
     const response = await worker.fetch(
-      request(`/?url=${encodeURIComponent(TARGET)}`, { headers: { Authorization: 'Bearer student-token' } })
+      request(`/?url=${encodeURIComponent(TARGET)}`, {
+        headers: {
+          Authorization: 'Bearer student-token',
+          'User-Agent': 'Mozilla/5.0 (Macintosh) Chrome/126.0'
+        }
+      })
     );
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
@@ -67,7 +72,25 @@ test('forwards the Authorization header and returns Canvas JSON with CORS', asyn
     assert.equal(response.headers.get('Set-Cookie'), null);
     assert.equal(seen.url, TARGET);
     assert.equal(seen.init.headers.get('Authorization'), 'Bearer student-token');
+    // The caller's real browser identity goes upstream, never the default
+    // server-to-server one that WAFs turn into 403 pages.
+    assert.equal(seen.init.headers.get('User-Agent'), 'Mozilla/5.0 (Macintosh) Chrome/126.0');
     assert.deepEqual(await response.json(), [{ type: 'submitting' }]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('falls back to a browser User-Agent when the caller sends none', async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamUA = null;
+  globalThis.fetch = async (url, init) => {
+    upstreamUA = init.headers.get('User-Agent');
+    return new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    await worker.fetch(request(`/?url=${encodeURIComponent(TARGET)}`));
+    assert.match(upstreamUA, /^Mozilla\/5\.0 .*Chrome\//);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -14,6 +14,9 @@ const CORS = {
   'Access-Control-Max-Age': '86400'
 };
 
+const BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
 function reply(status, body, extraHeaders = {}) {
   const headers = { ...CORS, 'Cache-Control': 'no-store', ...extraHeaders };
   if (body === null) return new Response(null, { status, headers });
@@ -57,6 +60,12 @@ export default {
     // referrers, nothing that could identify a different session.
     const authorization = request.headers.get('Authorization');
     if (authorization) headers.set('Authorization', authorization);
+    // CDNs and WAFs in front of school Canvas reject the default
+    // server-to-server User-Agent with a 403 HTML page. Present the identity
+    // of the person actually making the request (their browser), falling back
+    // to a normal browser string for non-browser callers.
+    const callerUA = request.headers.get('User-Agent');
+    headers.set('User-Agent', callerUA || BROWSER_UA);
 
     let upstream;
     try {

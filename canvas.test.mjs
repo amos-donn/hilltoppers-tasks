@@ -47,6 +47,8 @@ test('probeCanvas tells a real Canvas apart from a plain website', async () => {
 
   assert.equal(await probeCanvas('https://canvas.example.edu', via(reply(401, 'application/json; charset=utf-8'))), 'canvas');
   assert.equal(await probeCanvas('https://wrong.example', via(reply(404, 'text/html; charset=UTF-8'))), 'not-canvas');
+  assert.equal(await probeCanvas('https://waf.example', via(reply(403, 'text/html; charset=UTF-8'))), 'blocked');
+  assert.equal(await probeCanvas('https://canvas.example.edu', via(reply(403, 'application/json'))), 'canvas');
   assert.equal(await probeCanvas('https://canvas.example.edu', via(reply(404, 'application/json'))), 'canvas');
   assert.equal(await probeCanvas('https://odd.example', via(reply(200, 'text/html'))), 'unknown');
   assert.equal(await probeCanvas('https://x.example', via(async () => { throw new Error('net down'); })), 'unknown');

@@ -58,8 +58,9 @@ export function authHeaders(token) {
 
 // Ask the host what it is, with no token: a real Canvas answers
 // /users/self/profile with 401 + JSON, while a non-Canvas host answers 404
-// (or some page) in HTML. Only meaningful through a relay — without one the
-// browser cannot read a cross-origin response at all.
+// (or some page) in HTML, and a 403 HTML means a firewall in front of Canvas
+// is refusing us. Only meaningful through a relay — without one the browser
+// cannot read a cross-origin response at all.
 export async function probeCanvas(base, { relay, signal, fetchImpl = fetch } = {}) {
   const target = buildUrl(base, '/api/v1/users/self/profile', {});
   try {
@@ -69,7 +70,9 @@ export async function probeCanvas(base, { relay, signal, fetchImpl = fetch } = {
     });
     const type = response.headers.get('Content-Type') || '';
     if (!/json/i.test(type)) {
-      return response.status === 404 ? 'not-canvas' : 'unknown';
+      if (response.status === 404) return 'not-canvas';
+      if (response.status === 403) return 'blocked';
+      return 'unknown';
     }
     return 'canvas';
   } catch {

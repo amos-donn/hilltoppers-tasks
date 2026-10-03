@@ -210,10 +210,12 @@ async function refresh() {
         }
         lastError = plain('Canvas did not return a to-do list — double-check the Canvas site address in Settings.');
       } catch (error) {
-        // Only a missing endpoint is worth trying on the next path; token and
-        // permission failures will fail the same way on every path.
-        if (error && error.status === 404) {
+        // Only a missing endpoint is worth trying on the next path; a 403
+        // fails identically everywhere, so stop and let the probe below
+        // explain it. Token failures fail the same way on every path.
+        if (error && (error.status === 404 || error.status === 403)) {
           lastError = error;
+          if (error.status === 403) break;
           continue;
         }
         throw error;
@@ -221,13 +223,17 @@ async function refresh() {
     }
     if (id !== generation) return;
     if (!payload) {
-      // Every to-do path 404'd. A real Canvas never 404s these — it answers
-      // 401 without a token — so ask the host what it actually is.
-      if (lastError && lastError.status === 404 && relay) {
+      // Every to-do path failed with an HTML error page. A real Canvas never
+      // does that (it answers 401 + JSON without a token), so ask the host
+      // what it actually is.
+      if (lastError && (lastError.status === 404 || lastError.status === 403) && relay) {
         const verdict = await probeCanvas(base, { relay, signal });
         if (id !== generation) return;
         if (verdict === 'not-canvas') {
           throw plain('That address does not answer like a Canvas site. In Settings, paste the address you actually log into Canvas with — usually https://school.instructure.com — with nothing after the domain (no /courses/…). If your school hosts Canvas under a path like school.edu/canvas, keep that path.');
+        }
+        if (verdict === 'blocked') {
+          throw plain('A firewall in front of that Canvas refused this request (403) — usually a CDN or security layer blocking non-browser traffic. Reload and try again; if it still fails, ask whoever administers your school Canvas to allow API requests.');
         }
       }
       throw lastError || plain('Canvas did not return a to-do list.');
