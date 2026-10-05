@@ -12,7 +12,8 @@ import {
   parseTodo,
   parseCourses,
   sortTasks,
-  formatDue
+  formatDue,
+  visibleTasks
 } from './canvas.js';
 
 const $ = selector => document.querySelector(selector);
@@ -58,12 +59,14 @@ function readSettings() {
     const raw = localStorage.getItem(SETTINGS_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     return {
-      token: typeof parsed.token === 'string' ? parsed.token : ''
+      token: typeof parsed.token === 'string' ? parsed.token : '',
+      // Off by default: overdue work stays visible until someone asks.
+      hideOverdue: parsed.hideOverdue === true
     };
   } catch {
     // Storage can be unavailable inside an embedded topping; settings then
     // live only for this page view.
-    return { token: '' };
+    return { token: '', hideOverdue: false };
   }
 }
 
@@ -96,13 +99,18 @@ function render() {
   noticeNode.hidden = !notice || !isConfigured;
   noticeNode.textContent = notice;
 
+  // "Don't show overdue" is a view setting: filter here so toggling it takes
+  // effect immediately without another Canvas round trip.
+  const now = new Date();
+  const shown = visibleTasks(tasks, { now, hideOverdue: settings.hideOverdue });
+  const hiddenCount = tasks.length - shown.length;
+
   const list = $('#tasks');
   list.replaceChildren();
   const empty = $('#empty');
 
-  if (isConfigured && tasks.length) {
-    const now = new Date();
-    for (const task of tasks) {
+  if (isConfigured && shown.length) {
+    for (const task of shown) {
       const due = formatDue(task.dueAt, now);
       const row = el('li', 'task');
       row.dataset.state = due.state;
@@ -120,10 +128,14 @@ function render() {
       list.append(row);
     }
   }
-  empty.hidden = !(isConfigured && !notice && loadedAt && !tasks.length);
+  empty.hidden = !(isConfigured && !notice && loadedAt && !shown.length);
+  // Say why the list is empty when the overdue filter is what emptied it.
+  $('#empty-detail').textContent = hiddenCount
+    ? `${hiddenCount} overdue item${hiddenCount === 1 ? '' : 's'} hidden by your settings.`
+    : 'Your Canvas to-do list is empty.';
 
-  $('#count').hidden = !tasks.length;
-  $('#count').textContent = String(tasks.length);
+  $('#count').hidden = !shown.length;
+  $('#count').textContent = String(shown.length);
   $('#updated').textContent = loadedAt ? updatedLabel() : '';
   $('#refresh').disabled = loading;
   $('#refresh').classList.toggle('spinning', loading);
@@ -264,19 +276,27 @@ async function refresh() {
 function openSetup() {
   setupOpen = true;
   $('#token').value = settings.token;
+  $('#hide-overdue').checked = settings.hideOverdue;
   $('#form-error').hidden = true;
   render();
 }
 
 $('#refresh').addEventListener('click', () => void refresh());
 $('#settings-btn').addEventListener('click', openSetup);
+// The toggle applies the moment it changes — no save needed — and re-renders
+// the list behind the open settings panel.
+$('#hide-overdue').addEventListener('change', event => {
+  settings = { ...settings, hideOverdue: event.target.checked };
+  writeSettings();
+  render();
+});
 $('#setup-cancel').addEventListener('click', () => {
   setupOpen = false;
   render();
 });
 
 $('#forget').addEventListener('click', () => {
-  settings = { token: '' };
+  settings = { token: '', hideOverdue: false };
   tasks = [];
   loadedAt = 0;
   notice = '';
@@ -298,7 +318,7 @@ $('#setup-form').addEventListener('submit', event => {
     errorNode.hidden = false;
     return;
   }
-  settings = { token };
+  settings = { token, hideOverdue: $('#hide-overdue').checked };
   const kept = writeSettings();
   setupOpen = false;
   notice = kept ? '' : 'This browser will not keep your settings after the page closes.';

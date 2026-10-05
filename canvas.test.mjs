@@ -12,7 +12,8 @@ import {
   fetchMissingIds,
   fetchGradedIds,
   sortTasks,
-  formatDue
+  formatDue,
+  visibleTasks
 } from './canvas.js';
 
 test('normalizeBaseUrl accepts bare domains and strips paths and queries', () => {
@@ -358,6 +359,33 @@ test('sortTasks orders by due date with undated items last', () => {
     { title: 'Also later', dueAt: 300 }
   ]);
   assert.deepEqual(sorted.map(task => task.title), ['Sooner', 'Also later', 'Later', 'No date']);
+});
+
+test('visibleTasks can hide overdue rows without touching the rest', () => {
+  const now = new Date(2026, 9, 3, 12, 0, 0); // Sat Oct 3 2026, noon local
+  const tasks = [
+    { title: 'Overdue', dueAt: new Date(2026, 9, 2, 9, 0).getTime() },
+    { title: 'Due earlier today', dueAt: new Date(2026, 9, 3, 9, 0).getTime() },
+    { title: 'Tonight', dueAt: new Date(2026, 9, 3, 23, 0).getTime() },
+    { title: 'No date', dueAt: null }
+  ];
+
+  // Off (the default) keeps every row, and never mutates the input.
+  assert.deepEqual(visibleTasks(tasks, { now }).map(task => task.title), [
+    'Overdue', 'Due earlier today', 'Tonight', 'No date'
+  ]);
+  assert.equal(visibleTasks(tasks).length, tasks.length);
+
+  // On, only rows whose due time has passed are dropped.
+  assert.deepEqual(visibleTasks(tasks, { now, hideOverdue: true }).map(task => task.title), [
+    'Tonight', 'No date'
+  ]);
+  assert.equal(tasks.length, 4);
+});
+
+test('visibleTasks tolerates a missing list', () => {
+  assert.deepEqual(visibleTasks(undefined, { hideOverdue: true }), []);
+  assert.deepEqual(visibleTasks(null), []);
 });
 
 test('formatDue names today, tomorrow and overdue in plain words', () => {

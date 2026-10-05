@@ -62,6 +62,10 @@ Canvas site (`https://stjacademy.instructure.com`) and the relay are baked into
 the page. Press **Save & load**. Settings stay in this browser only
 (localStorage); they are never written into the repository.
 
+In Settings you can also turn on **Don't show overdue** to hide anything whose
+due time has already passed. It takes effect the moment you toggle it and is
+remembered alongside your token.
+
 ## Using it as a Hilltoppers topping
 
 Open the extension popup → **Topping Bar** → publish or preview with this

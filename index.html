@@ -38,7 +38,7 @@
     <ul class="tasks" id="tasks"></ul>
     <p class="empty" id="empty" hidden>
       <strong>Nothing due right now.</strong>
-      <span>Your Canvas to-do list is empty.</span>
+      <span id="empty-detail">Your Canvas to-do list is empty.</span>
     </p>
   </section>
 
@@ -51,6 +51,11 @@
     <form id="setup-form" novalidate>
       <label for="token">Access token</label>
       <input id="token" name="token" type="password" placeholder="Canvas access token" autocomplete="off" required>
+
+      <label class="toggle" for="hide-overdue">
+        <input id="hide-overdue" name="hide-overdue" type="checkbox">
+        <span>Don't show overdue</span>
+      </label>
 
       <p class="form-error" id="form-error" role="alert" hidden></p>
 
