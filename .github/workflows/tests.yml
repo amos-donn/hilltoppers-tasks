@@ -1,0 +1,19 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # The site is plain ES modules with no runtime or test dependencies, so
+      # there is nothing to install — `node --test` runs both suites as-is.
+      - name: Run test suite
+        run: npm test

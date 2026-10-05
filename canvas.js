@@ -348,3 +348,12 @@ export function formatDue(dueAt, now = new Date()) {
     state: 'later'
   };
 }
+
+// The rows the page actually shows. With "don't show overdue" on, anything
+// whose due time has already passed is dropped; the original array is never
+// mutated, so the caller keeps the full list for when the setting is off.
+export function visibleTasks(tasks, { now = new Date(), hideOverdue = false } = {}) {
+  if (!Array.isArray(tasks)) return [];
+  if (!hideOverdue) return [...tasks];
+  return tasks.filter(task => formatDue(task.dueAt, now).state !== 'overdue');
+}
