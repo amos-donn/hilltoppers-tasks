@@ -349,9 +349,44 @@ export function formatDue(dueAt, now = new Date()) {
   };
 }
 
+// A checked-off item is remembered in the browser, so its identity has to
+// survive a refresh: prefer Canvas's ids, fall back to the link, then title
+// and due time for payloads that carry neither.
+export function taskKey(task) {
+  if (!task || typeof task !== 'object') return '';
+  const course = Number.isFinite(task.courseId) ? task.courseId : '';
+  const assignment = Number.isFinite(task.assignmentId) ? task.assignmentId : '';
+  if (course !== '' && assignment !== '') return `a:${course}:${assignment}`;
+  if (assignment !== '') return `a::${assignment}`;
+  if (task.url) return `u:${task.url}`;
+  return `t:${task.title ?? ''}|${task.dueAt ?? ''}`;
+}
+
+// Rows still to do stay in due-date order; checked-off ones follow at the
+// bottom, also in due-date order. Nothing is mutated.
+export function orderTasks(tasks, checked) {
+  if (!Array.isArray(tasks)) return [];
+  const done = checked instanceof Set ? checked : new Set(Array.isArray(checked) ? checked : []);
+  const open = [];
+  const finished = [];
+  for (const task of tasks) {
+    (done.has(taskKey(task)) ? finished : open).push(task);
+  }
+  return [...open, ...finished];
+}
+
+// Drop checked keys for items Canvas no longer lists (handed in, graded, gone),
+// so the browser-only store cannot grow forever.
+export function pruneChecked(checked, tasks) {
+  const done = checked instanceof Set ? checked : new Set(Array.isArray(checked) ? checked : []);
+  const live = new Set((Array.isArray(tasks) ? tasks : []).map(taskKey).filter(Boolean));
+  return new Set([...done].filter(key => live.has(key)));
+}
+
 // The rows the page actually shows. With "don't show overdue" on, anything
 // whose due time has already passed is dropped; the original array is never
 // mutated, so the caller keeps the full list for when the setting is off.
+// Checked-off items are not filtered here — orderTasks sinks them instead.
 export function visibleTasks(tasks, { now = new Date(), hideOverdue = false } = {}) {
   if (!Array.isArray(tasks)) return [];
   if (!hideOverdue) return [...tasks];

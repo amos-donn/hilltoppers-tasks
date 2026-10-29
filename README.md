@@ -66,6 +66,15 @@ In Settings you can also turn on **Don't show overdue** to hide anything whose
 due time has already passed. It takes effect the moment you toggle it and is
 remembered alongside your token.
 
+**Let me check items off** (also in Settings, off by default) puts a checkbox
+beside every item. Checking one moves it to the bottom of the list and greys it
+out; unchecking puts it back where its due date says it belongs. Checked items
+are stored in this browser only (localStorage, keyed by Canvas ids) — there are
+no accounts and nothing is written back to Canvas. Turning the setting off
+hides the checkboxes and shows every item normally; turning it back on restores
+your checks. A check is forgotten once Canvas stops listing the item (handed
+in, graded, or removed), and **Forget settings** clears them too.
+
 ## Using it as a Hilltoppers topping
 
 Open the extension popup → **Topping Bar** → publish or preview with this
@@ -101,6 +110,8 @@ GitHub Pages serves.
 
 - Your token is stored in this browser and sent only to the Canvas site this
   page is configured for and to its relay.
+- Which items you checked off stays in this browser's localStorage; it is never
+  sent anywhere.
 - The relay keeps no state, sets no cookies, and accepts only GET/HEAD to
   Canvas `/api/v1/` paths.
 - The list you see comes straight from Canvas's own to-do endpoint

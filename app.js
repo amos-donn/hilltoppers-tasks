@@ -13,7 +13,10 @@ import {
   parseCourses,
   sortTasks,
   formatDue,
-  visibleTasks
+  visibleTasks,
+  taskKey,
+  orderTasks,
+  pruneChecked
 } from './canvas.js';
 
 const $ = selector => document.querySelector(selector);
@@ -34,6 +37,9 @@ window.addEventListener('message', event => {
 });
 
 const SETTINGS_KEY = 'hilltoppers-tasks:settings:v1';
+// Checked-off items have nowhere to live but this browser (there are no
+// accounts), so their keys sit in localStorage beside the settings.
+const CHECKED_KEY = 'hilltoppers-tasks:checked:v1';
 const REFRESH_INTERVAL = 5 * 60_000;
 // Current Canvas documents /users/self/todo (it answers 401 without a token);
 // /todo_items 404s there but older school installs may still use it, so try both.
@@ -46,6 +52,7 @@ const BASE = normalizeBaseUrl(CANVAS_URL);
 const RELAY = normalizeBaseUrl(RELAY_URL);
 
 let settings = readSettings();
+let checked = readChecked();
 let tasks = [];
 let notice = '';
 let loadedAt = 0;
@@ -61,12 +68,14 @@ function readSettings() {
     return {
       token: typeof parsed.token === 'string' ? parsed.token : '',
       // Off by default: overdue work stays visible until someone asks.
-      hideOverdue: parsed.hideOverdue === true
+      hideOverdue: parsed.hideOverdue === true,
+      // Off by default: the list stays a plain list until someone opts in.
+      checkOff: parsed.checkOff === true
     };
   } catch {
     // Storage can be unavailable inside an embedded topping; settings then
     // live only for this page view.
-    return { token: '', hideOverdue: false };
+    return { token: '', hideOverdue: false, checkOff: false };
   }
 }
 
@@ -76,6 +85,24 @@ function writeSettings() {
     return true;
   } catch {
     return false;
+  }
+}
+
+function readChecked() {
+  try {
+    const raw = localStorage.getItem(CHECKED_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed.filter(key => typeof key === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeChecked() {
+  try {
+    localStorage.setItem(CHECKED_KEY, JSON.stringify([...checked]));
+  } catch {
+    /* Checked items then last only for this page view. */
   }
 }
 
@@ -110,10 +137,15 @@ function render() {
   const empty = $('#empty');
 
   if (isConfigured && shown.length) {
-    for (const task of shown) {
+    // With check-off on, finished items sink to the bottom and grey out; both
+    // groups keep their due-date order.
+    for (const task of orderTasks(shown, checked)) {
       const due = formatDue(task.dueAt, now);
+      const key = taskKey(task);
+      const done = checked.has(key);
       const row = el('li', 'task');
       row.dataset.state = due.state;
+      row.dataset.done = done ? 'true' : 'false';
       const link = el('a', '');
       if (task.url) {
         link.href = task.url;
@@ -124,6 +156,7 @@ function render() {
       if (task.kind) dueLine.append(el('span', 'chip', task.kind));
       link.append(dueLine, el('span', 'task-title', task.title));
       if (task.course) link.append(el('span', 'task-course', task.course));
+      if (settings.checkOff) row.append(checkBox(task, key, done));
       row.append(link);
       list.append(row);
     }
@@ -134,11 +167,35 @@ function render() {
     ? `${hiddenCount} overdue item${hiddenCount === 1 ? '' : 's'} hidden by your settings.`
     : 'Your Canvas to-do list is empty.';
 
+  // The badge counts what is still to do, not what is on screen.
+  const remaining = shown.filter(task => !checked.has(taskKey(task))).length;
   $('#count').hidden = !shown.length;
-  $('#count').textContent = String(shown.length);
+  $('#count').textContent = String(remaining);
   $('#updated').textContent = loadedAt ? updatedLabel() : '';
+  $('#check-off-hint').hidden = !settings.checkOff;
   $('#refresh').disabled = loading;
   $('#refresh').classList.toggle('spinning', loading);
+}
+
+// The checkbox beside a row. It is a real input inside a label so the whole
+// 26px strip is clickable and keyboard/AT users get a checkbox, not a link.
+function checkBox(task, key, done) {
+  const label = el('label', 'task-check');
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.checked = done;
+  box.setAttribute('aria-label', done ? `Mark “${task.title}” as not done` : `Mark “${task.title}” as done`);
+  box.addEventListener('change', () => setChecked(key, box.checked));
+  label.append(box);
+  return label;
+}
+
+function setChecked(key, done) {
+  if (!key) return;
+  if (done) checked.add(key);
+  else checked.delete(key);
+  writeChecked();
+  render();
 }
 
 function updatedLabel() {
@@ -258,6 +315,13 @@ async function refresh() {
       : new Set();
     if (id !== generation) return;
     tasks = sortTasks(rows.filter(row => !graded.has(row.assignmentId)));
+    // Forget checks for items Canvas no longer lists, so the browser store
+    // cannot grow forever.
+    const live = pruneChecked(checked, tasks);
+    if (live.size !== checked.size) {
+      checked = live;
+      writeChecked();
+    }
     notice = '';
     loadedAt = Date.now();
   } catch (error) {
@@ -277,6 +341,7 @@ function openSetup() {
   setupOpen = true;
   $('#token').value = settings.token;
   $('#hide-overdue').checked = settings.hideOverdue;
+  $('#check-off').checked = settings.checkOff;
   $('#form-error').hidden = true;
   render();
 }
@@ -290,18 +355,26 @@ $('#hide-overdue').addEventListener('change', event => {
   writeSettings();
   render();
 });
+// Like the overdue toggle, this applies at once and is remembered.
+$('#check-off').addEventListener('change', event => {
+  settings = { ...settings, checkOff: event.target.checked };
+  writeSettings();
+  render();
+});
 $('#setup-cancel').addEventListener('click', () => {
   setupOpen = false;
   render();
 });
 
 $('#forget').addEventListener('click', () => {
-  settings = { token: '', hideOverdue: false };
+  settings = { token: '', hideOverdue: false, checkOff: false };
+  checked = new Set();
   tasks = [];
   loadedAt = 0;
   notice = '';
   try {
     localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(CHECKED_KEY);
   } catch {
     /* Nothing to clear if storage is unavailable. */
   }
@@ -318,7 +391,11 @@ $('#setup-form').addEventListener('submit', event => {
     errorNode.hidden = false;
     return;
   }
-  settings = { token, hideOverdue: $('#hide-overdue').checked };
+  settings = {
+    token,
+    hideOverdue: $('#hide-overdue').checked,
+    checkOff: $('#check-off').checked
+  };
   const kept = writeSettings();
   setupOpen = false;
   notice = kept ? '' : 'This browser will not keep your settings after the page closes.';

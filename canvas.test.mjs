@@ -13,7 +13,10 @@ import {
   fetchGradedIds,
   sortTasks,
   formatDue,
-  visibleTasks
+  visibleTasks,
+  taskKey,
+  orderTasks,
+  pruneChecked
 } from './canvas.js';
 
 test('normalizeBaseUrl accepts bare domains and strips paths and queries', () => {
@@ -386,6 +389,48 @@ test('visibleTasks can hide overdue rows without touching the rest', () => {
 test('visibleTasks tolerates a missing list', () => {
   assert.deepEqual(visibleTasks(undefined, { hideOverdue: true }), []);
   assert.deepEqual(visibleTasks(null), []);
+});
+
+test('taskKey keeps an item’s identity across refreshes', () => {
+  assert.equal(taskKey({ courseId: 10, assignmentId: 5, title: 'Essay' }), 'a:10:5');
+  assert.equal(taskKey({ courseId: NaN, assignmentId: 5 }), 'a::5');
+  assert.equal(taskKey({ courseId: NaN, assignmentId: NaN, url: 'https://s.canvas/x' }), 'u:https://s.canvas/x');
+  assert.equal(taskKey({ title: 'No ids', dueAt: 12 }), 't:No ids|12');
+  assert.equal(taskKey(null), '');
+});
+
+test('orderTasks sinks checked rows to the bottom and keeps the rest in order', () => {
+  const tasks = [
+    { title: 'A', courseId: 1, assignmentId: 1 },
+    { title: 'B', courseId: 1, assignmentId: 2 },
+    { title: 'C', courseId: 1, assignmentId: 3 }
+  ];
+  const titles = checked => orderTasks(tasks, checked).map(task => task.title);
+
+  // Nothing checked: unchanged. Everything checked: also unchanged.
+  assert.deepEqual(titles(new Set()), ['A', 'B', 'C']);
+  assert.deepEqual(titles(new Set(tasks.map(taskKey))), ['A', 'B', 'C']);
+  // Checked rows keep their own order at the bottom.
+  assert.deepEqual(titles(new Set([taskKey(tasks[0])])), ['B', 'C', 'A']);
+  assert.deepEqual(titles(new Set([taskKey(tasks[1]), taskKey(tasks[0])])), ['C', 'A', 'B']);
+  // Plain arrays are accepted too, and the input is never mutated.
+  assert.deepEqual(titles([taskKey(tasks[2])]), ['A', 'B', 'C']);
+  assert.deepEqual(tasks.map(task => task.title), ['A', 'B', 'C']);
+  assert.deepEqual(orderTasks(undefined, new Set()), []);
+});
+
+test('pruneChecked forgets items Canvas no longer lists', () => {
+  const live = [
+    { title: 'Still due', courseId: 1, assignmentId: 1 },
+    { title: 'Link only', url: 'https://s.canvas/courses/1/pages/x' }
+  ];
+  const kept = pruneChecked(
+    new Set(['a:1:1', 'a:1:9', 'u:https://s.canvas/courses/1/pages/x']),
+    live
+  );
+  assert.deepEqual([...kept].sort(), ['a:1:1', 'u:https://s.canvas/courses/1/pages/x']);
+  // An empty list clears everything rather than throwing.
+  assert.equal(pruneChecked(new Set(['a:1:1']), undefined).size, 0);
 });
 
 test('formatDue names today, tomorrow and overdue in plain words', () => {
