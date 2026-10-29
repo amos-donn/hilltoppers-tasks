@@ -99,10 +99,16 @@ main { max-width: 620px; margin: 48px auto; padding: 0 20px; }
 .embedded .panel, .embedded .setup { border: 0; border-radius: 0; padding-left: 2px; padding-right: 2px; }
 .embedded .setup { border-top: 1px solid #eef1ee; border-radius: 0; padding-top: 12px; }
 .embedded .setup h2 { font-size: 13px; }
+/* The popup iframe is ~318px wide: at that width a 10px gap reads as no gap
+   at all, so the check-off box gets a wider berth from the title there. */
+.embedded .task-check { padding-top: 10px; }
+.embedded .task-check + a { padding-left: 16px; }
 
 @media (max-width: 360px) {
   .embedded main { padding: 6px 8px 10px; }
   .updated { display: none; }
+  /* Narrow standalone tabs need the same breathing room as the popup. */
+  .task-check + a { padding-left: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
